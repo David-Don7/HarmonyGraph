@@ -1,0 +1,93 @@
+{
+  "id": "66e17c7e-f402-480b-b8f2-c643bab8c083",
+  "name": "harmony-2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7-42-tpe-4aded022-9ffd-4355-a3a0-9653fad4de4e",
+  "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7",
+  "summary": {
+    "feasible": true,
+    "best_value": 1.0,
+    "best_parameters": {
+      "window": 8,
+      "change_penalty": 2.857071488588757,
+      "top_k": 4,
+      "functional_weight": 0.559195090518222,
+      "chord_weight": 0.07800932022121826,
+      "section_weight": 0.062397808134481064,
+      "boundary_weight": 0.023233444867279785,
+      "insertion": 0.8795585311974417,
+      "deletion": 0.6410035105688879,
+      "substitution": 0.7080725777960455,
+      "confidence_threshold": 0.31235069657748143,
+      "candidate_limit": 4445
+    },
+    "configuration_id": "bde2a919a1809fce88d23f0c4f6d6a9970f3a15354e05f3171f8086fee363c3f",
+    "trials": 3,
+    "split": "validation",
+    "sampler": "tpe",
+    "seed": 42
+  },
+  "trials": [
+    {
+      "id": "2cc6d350-bcdd-4606-87fd-ce4d3412fff2",
+      "study_id": "66e17c7e-f402-480b-b8f2-c643bab8c083",
+      "number": 0,
+      "parameters": {
+        "window": 8,
+        "change_penalty": 2.857071488588757,
+        "top_k": 4,
+        "functional_weight": 0.559195090518222,
+        "chord_weight": 0.07800932022121826,
+        "section_weight": 0.062397808134481064,
+        "boundary_weight": 0.023233444867279785,
+        "insertion": 0.8795585311974417,
+        "deletion": 0.6410035105688879,
+        "substitution": 0.7080725777960455,
+        "confidence_threshold": 0.31235069657748143,
+        "candidate_limit": 4445
+      },
+      "value": 1.0,
+      "state": "COMPLETE"
+    },
+    {
+      "id": "b7be23c1-4676-40e8-8ca5-e29dde2e2f9b",
+      "study_id": "66e17c7e-f402-480b-b8f2-c643bab8c083",
+      "number": 1,
+      "parameters": {
+        "window": 14,
+        "change_penalty": 0.7157834209670008,
+        "top_k": 1,
+        "functional_weight": 0.3100427059120603,
+        "chord_weight": 0.15212112147976886,
+        "section_weight": 0.20990257265289514,
+        "boundary_weight": 0.17277800745684632,
+        "insertion": 0.36210622617823773,
+        "deletion": 0.6506676052501416,
+        "substitution": 0.13949386065204183,
+        "confidence_threshold": 0.47528678912113087,
+        "candidate_limit": 418
+      },
+      "value": 1.0,
+      "state": "COMPLETE"
+    },
+    {
+      "id": "65f7c8b9-46f1-41d6-8730-41527cba07a0",
+      "study_id": "66e17c7e-f402-480b-b8f2-c643bab8c083",
+      "number": 2,
+      "parameters": {
+        "window": 9,
+        "change_penalty": 2.3770102880397395,
+        "top_k": 1,
+        "functional_weight": 0.508540663048167,
+        "chord_weight": 0.29620728443102123,
+        "section_weight": 0.01858016508799909,
+        "boundary_weight": 0.24301794076057537,
+        "insertion": 0.2534717113185624,
+        "deletion": 0.1585464336867516,
+        "substitution": 0.9488855372533332,
+        "confidence_threshold": 0.8793792198447357,
+        "candidate_limit": 2361
+      },
+      "value": 0.6666666666666666,
+      "state": "COMPLETE"
+    }
+  ]
+}

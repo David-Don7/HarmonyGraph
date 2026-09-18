@@ -1,0 +1,9 @@
+{
+  "songs": 120,
+  "exhaustive_matched_passages": 60,
+  "relevant_starts": 60,
+  "candidate_start_recall": 1.0,
+  "candidate_limit_reached": false,
+  "analysis_id": "517923db-a17f-4c8c-bb12-e6c06402b9bb",
+  "definition": "Fraction of exhaustive matcher-accepted start positions present in indexed candidate generation; not human relevance recall."
+}

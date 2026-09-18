@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+.env
+data/local/
+artifacts/
+*.db
+*.egg-info/
+playwright-report/
+test-results/
+.npm-cache/
+*.tsbuildinfo

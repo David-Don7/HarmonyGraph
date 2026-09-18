@@ -1,0 +1,11 @@
+{
+  "experiment_id": "f9764a0b-fc70-4a3a-a59e-29d47a87696b",
+  "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7",
+  "directory": "docs/measured/f9764a0b-fc70-4a3a-a59e-29d47a87696b",
+  "files": [
+    "report.json",
+    "metrics.csv",
+    "report.md",
+    "retrieval.svg"
+  ]
+}

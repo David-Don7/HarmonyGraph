@@ -1,0 +1,105 @@
+{
+  "analysis_id": "1308aa1a-b2c4-4e51-bbdc-77e829779aa1",
+  "measurements": [
+    {
+      "songs": 12,
+      "mode": "functional",
+      "query": "V7 I",
+      "median_ms": 5.28535000012198,
+      "p95_ms": 7.176439999784634,
+      "candidate_median_ms": 4.195649999928719,
+      "rerank_median_ms": 1.254750000043714,
+      "serial_queries_per_second": 179.90497419783048
+    },
+    {
+      "songs": 12,
+      "mode": "transposed",
+      "query": "C G Am F",
+      "median_ms": 4.183000000011816,
+      "p95_ms": 6.169345000262181,
+      "candidate_median_ms": 3.2080999999379856,
+      "rerank_median_ms": 0.991500000054657,
+      "serial_queries_per_second": 229.01112993837188
+    },
+    {
+      "songs": 12,
+      "mode": "fuzzy",
+      "query": "I V vi IV",
+      "median_ms": 30.546500000127708,
+      "p95_ms": 48.532705000161485,
+      "candidate_median_ms": 17.252800000278512,
+      "rerank_median_ms": 13.110349999806203,
+      "serial_queries_per_second": 29.693371400241585
+    },
+    {
+      "songs": 60,
+      "mode": "functional",
+      "query": "V7 I",
+      "median_ms": 38.52199999937511,
+      "p95_ms": 42.03247000018564,
+      "candidate_median_ms": 20.20669999956226,
+      "rerank_median_ms": 20.457300000089162,
+      "serial_queries_per_second": 25.30880538906263
+    },
+    {
+      "songs": 60,
+      "mode": "transposed",
+      "query": "C G Am F",
+      "median_ms": 15.686149999964982,
+      "p95_ms": 24.292975000480496,
+      "candidate_median_ms": 8.998499999961496,
+      "rerank_median_ms": 6.7051000000901695,
+      "serial_queries_per_second": 59.06925752266613
+    },
+    {
+      "songs": 60,
+      "mode": "fuzzy",
+      "query": "I V vi IV",
+      "median_ms": 247.7072999995471,
+      "p95_ms": 286.6131249998034,
+      "candidate_median_ms": 75.0502999994751,
+      "rerank_median_ms": 170.10785000002215,
+      "serial_queries_per_second": 3.9860712321323146
+    },
+    {
+      "songs": 120,
+      "mode": "functional",
+      "query": "V7 I",
+      "median_ms": 73.72960000020612,
+      "p95_ms": 78.50458999973853,
+      "candidate_median_ms": 38.05245000012292,
+      "rerank_median_ms": 36.28154999978506,
+      "serial_queries_per_second": 13.457521132698336
+    },
+    {
+      "songs": 120,
+      "mode": "transposed",
+      "query": "C G Am F",
+      "median_ms": 27.29979999958232,
+      "p95_ms": 36.76782999978059,
+      "candidate_median_ms": 13.541250000344007,
+      "rerank_median_ms": 15.054099999815662,
+      "serial_queries_per_second": 36.38842018612429
+    },
+    {
+      "songs": 120,
+      "mode": "fuzzy",
+      "query": "I V vi IV",
+      "median_ms": 354.7091499999624,
+      "p95_ms": 397.4648550001348,
+      "candidate_median_ms": 112.93520000026547,
+      "rerank_median_ms": 220.33220000002984,
+      "serial_queries_per_second": 2.827107745232063
+    }
+  ],
+  "repeats": 10,
+  "database_bytes": 145276928,
+  "python_allocation_peak_bytes": 5311352,
+  "index_rows": 34728,
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.4",
+    "logical_cpus": 12
+  },
+  "note": "Warm serial queries. Python peak allocations measured in a separate fuzzy query, outside latency timing. Process RSS is not measured."
+}
