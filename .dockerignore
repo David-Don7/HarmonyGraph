@@ -1,7 +1,6 @@
 .git
 .venv
 web
-tests
 artifacts
 data/local
 data/imports

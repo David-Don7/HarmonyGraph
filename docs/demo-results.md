@@ -1,6 +1,6 @@
 # Executed demonstration and verification
 
-Recorded on 19 September 2026. This is a local software demonstration with original synthetic music, not a completed scientific study.
+Recorded on 19 September 2026. **Docker verification has now also passed; see [Docker results](docker-results.md).** This is a local software demonstration with original synthetic music, not a completed scientific study.
 
 ## Delivered corpus and interfaces
 
@@ -15,18 +15,18 @@ Recorded on 19 September 2026. This is a local software demonstration with origi
 
 | Check | Observed result |
 |---|---|
-| Python suite | 41 passed; 2 PostgreSQL tests skipped because `TEST_POSTGRES_URL` was not supplied |
+| Original native Python suite | 41 passed; 2 PostgreSQL tests skipped because `TEST_POSTGRES_URL` was not supplied |
 | Final targeted follow-ups | Seeded optimization/resume tests and annotation-revision preservation passed |
 | Static Python checks | Passed for application, tests, and scripts |
 | Generated API types and production web build | Passed |
 | Browser scenarios | 3 passed in 37.1 seconds: search/evidence/song inspection, annotation/export, and durable analysis/comparison jobs |
 | Durable optimization | Three seeded validation trials completed through the worker |
 | Container configuration | `docker compose config --quiet` passed; sandbox emitted a Docker user-config access warning |
-| Fresh Docker deployment / PostgreSQL runtime | **Not verified: Docker Desktop engine remained unreachable** |
+| Fresh Docker deployment / PostgreSQL runtime | Subsequently verified: 43 containerized Python checks and 3 production browser scenarios passed; see [Docker results](docker-results.md) |
 
 The Python suite covers chord aliases, inversions, alterations, no-chord versus unknown labels, posterior normalization, transposition across all twelve roots, structural filtering, score reconstruction, idempotent ingestion, failed-index activation protection, stale-job recovery, annotation independence, revisions, migrations, grouped splits, metric fixtures, and test-set safeguards. There is one non-failing upstream warning about Starlette's httpx test-client integration.
 
-The two PostgreSQL tests are provided for actual migrations, indexes, row locking, imports, filtering, version isolation, and job recovery in an isolated test schema. CI is configured to execute them, but no CI run is asserted here.
+Both PostgreSQL tests subsequently passed in the Docker verification container, covering migrations, indexes, row locking, imports, filtering, version isolation, and job recovery in isolated schemas. CI is also configured to execute them, but no remote CI run is asserted here.
 
 ## Measured retrieval demonstration
 
@@ -73,4 +73,4 @@ A real optimization job initially exposed a collision between the application's 
 
 ## Remaining verification and research work
 
-Start Docker Desktop's Linux engine, follow the Docker quick start, and run the PostgreSQL tests against a disposable database. The fresh-container workflow cannot be claimed complete until that is done. External-corpus import validation at scale, expert annotations, confidence calibration findings, transfer studies, the explicit 100–300-trial research preset, and final frozen test evaluation are subsequent research work.
+The fresh-container workflow and PostgreSQL checks are now complete; see [Docker results](docker-results.md). External-corpus import validation at scale, expert annotations, confidence calibration findings, transfer studies, the explicit 100–300-trial research preset, and final frozen test evaluation are subsequent research work.

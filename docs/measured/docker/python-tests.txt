@@ -1,0 +1,5 @@
+Command: docker compose --profile verification run --build --rm verify
+Result: 43 passed, 1 warning in 44.28s
+Skipped: 0
+Warning: Starlette test-client httpx deprecation
+Database for PostgreSQL integration checks: harmonygraph_verification; isolated test schemas

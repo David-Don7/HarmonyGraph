@@ -1,0 +1,172 @@
+{
+  "health": {
+    "status": "ok",
+    "database": "postgresql",
+    "version": "0.1.0"
+  },
+  "demo": {
+    "id": "26461743-5936-448f-954c-c6cc7a986ca9",
+    "kind": "demo",
+    "status": "completed",
+    "progress": 1.0,
+    "parameters": {},
+    "result": {
+      "dataset_id": "8afb1cc5e3575576d537d6503ddb63037e214a90f97cf5d6fb903b8bf672bc1c",
+      "imported": 120,
+      "skipped": 0,
+      "invalid": 0,
+      "unknown_chords": 0,
+      "errors": [],
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2",
+      "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7"
+    },
+    "error": null,
+    "created_at": "2026-09-18T23:37:15.965034+00:00",
+    "updated_at": "2026-09-18T23:38:08.571035+00:00"
+  },
+  "idempotent_import": {
+    "id": "b321acb7-84ca-4f6a-9b12-688c9729cfe6",
+    "kind": "demo",
+    "status": "completed",
+    "progress": 1.0,
+    "parameters": {},
+    "result": {
+      "dataset_id": "8afb1cc5e3575576d537d6503ddb63037e214a90f97cf5d6fb903b8bf672bc1c",
+      "imported": 0,
+      "skipped": 120,
+      "invalid": 0,
+      "unknown_chords": 0,
+      "errors": [],
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2",
+      "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7"
+    },
+    "error": null,
+    "created_at": "2026-09-18T23:38:10.579611+00:00",
+    "updated_at": "2026-09-18T23:38:11.031182+00:00"
+  },
+  "search_modes": {
+    "literal": {
+      "count": 3,
+      "timings": {
+        "candidate_ms": 41.019847000029586,
+        "rerank_ms": 320.907563999981,
+        "total_ms": 361.9274110000106
+      },
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2"
+    },
+    "transposed": {
+      "count": 20,
+      "timings": {
+        "candidate_ms": 12.744326999950317,
+        "rerank_ms": 503.299673000015,
+        "total_ms": 516.0439999999653
+      },
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2"
+    },
+    "functional": {
+      "count": 20,
+      "timings": {
+        "candidate_ms": 24.19036599997071,
+        "rerank_ms": 1644.6361700000125,
+        "total_ms": 1668.8265359999832
+      },
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2"
+    },
+    "fuzzy": {
+      "count": 20,
+      "timings": {
+        "candidate_ms": 50.90138000002753,
+        "rerank_ms": 312.22227299997485,
+        "total_ms": 363.1236530000024
+      },
+      "analysis_id": "5ea57feb-958c-4d31-a701-3c384f2908f2"
+    }
+  },
+  "comparison_job": "f66047a1-c7f4-4ab9-b376-16dcd5c0cfc7",
+  "experiment_id": "60e3096d-36f1-45e6-b94f-1ff7871b4d3f",
+  "optimization": {
+    "id": "bd68f742-bb3e-4476-b62a-2c54c751047a",
+    "kind": "optimize",
+    "status": "completed",
+    "progress": 1.0,
+    "parameters": {
+      "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7",
+      "trials": 3
+    },
+    "result": {
+      "study_id": "3866e9c5-bc37-4d9c-8922-44542c9e3ccb",
+      "feasible": true,
+      "best_value": 1.0,
+      "best_parameters": {
+        "window": 8,
+        "change_penalty": 2.857071488588757,
+        "top_k": 4,
+        "functional_weight": 0.559195090518222,
+        "chord_weight": 0.07800932022121826,
+        "section_weight": 0.062397808134481064,
+        "boundary_weight": 0.023233444867279785,
+        "insertion": 0.8795585311974417,
+        "deletion": 0.6410035105688879,
+        "substitution": 0.7080725777960455,
+        "confidence_threshold": 0.31235069657748143,
+        "candidate_limit": 4445
+      },
+      "configuration_id": "27d5971fe63ec673689f5efc4f8955c7873817bc2361f7034787e462f4b81683",
+      "trials": 3,
+      "split": "validation",
+      "sampler": "tpe",
+      "seed": 42
+    },
+    "error": null,
+    "created_at": "2026-09-18T23:43:15.478397+00:00",
+    "updated_at": "2026-09-18T23:44:25.888801+00:00"
+  },
+  "export": {
+    "id": "77d3d0f5-d3c3-4e9c-a446-21544b5a0517",
+    "kind": "export",
+    "status": "completed",
+    "progress": 1.0,
+    "parameters": {
+      "experiment_id": "60e3096d-36f1-45e6-b94f-1ff7871b4d3f"
+    },
+    "result": {
+      "directory": "/app/artifacts/60e3096d-36f1-45e6-b94f-1ff7871b4d3f",
+      "files": [
+        "report.json",
+        "metrics.csv",
+        "report.md",
+        "retrieval.svg"
+      ]
+    },
+    "error": null,
+    "created_at": "2026-09-18T23:44:26.030995+00:00",
+    "updated_at": "2026-09-18T23:44:27.966463+00:00"
+  },
+  "overview": {
+    "songs": 120,
+    "events": 2388,
+    "datasets": 1,
+    "analysis": {
+      "id": "5ea57feb-958c-4d31-a701-3c384f2908f2",
+      "configuration_id": "cf909a770d3b35f2ff8963d81988fb68e173a0960bf90d603a24dfcf80aff8cf",
+      "corpus_hash": "b78b18cfda87d09103999ce71c501c536518d0e8dfe7e7512f3355f846a66172",
+      "status": "ready",
+      "active": true,
+      "created_at": "2026-09-18T23:37:24.542451+00:00",
+      "report": {
+        "songs": 120,
+        "algorithm": "hmm-functional-v4",
+        "index_version": 1,
+        "analysis_and_index_seconds": 43.57303038600003
+      }
+    },
+    "genres": [
+      "jazz",
+      "pop",
+      "rock",
+      "synthetic"
+    ],
+    "notice": "Model confidence is not established calibration. Synthetic data is marked throughout."
+  },
+  "note": "Synthetic validation smoke workflow; not an expert or full-corpus research study."
+}

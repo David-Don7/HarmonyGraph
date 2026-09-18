@@ -1,0 +1,4 @@
+Command: BASE_URL=http://127.0.0.1:8080 npm run test:e2e
+Result: 3 passed in 23.3 seconds
+Scenarios: search/evidence/song inspection/responsive navigation; independent annotation/export; durable analysis/comparison jobs and CSV download
+Target: production nginx web container proxying the PostgreSQL-backed FastAPI container

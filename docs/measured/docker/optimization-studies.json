@@ -1,0 +1,95 @@
+[
+  {
+    "id": "3866e9c5-bc37-4d9c-8922-44542c9e3ccb",
+    "name": "harmony-2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7-42-tpe-bd68f742-bb3e-4476-b62a-2c54c751047a",
+    "benchmark_id": "2d56c58088e6586d2b094c7f5dd381b49e7a1c325973d846fb071342b853a6b7",
+    "summary": {
+      "feasible": true,
+      "best_value": 1.0,
+      "best_parameters": {
+        "window": 8,
+        "change_penalty": 2.857071488588757,
+        "top_k": 4,
+        "functional_weight": 0.559195090518222,
+        "chord_weight": 0.07800932022121826,
+        "section_weight": 0.062397808134481064,
+        "boundary_weight": 0.023233444867279785,
+        "insertion": 0.8795585311974417,
+        "deletion": 0.6410035105688879,
+        "substitution": 0.7080725777960455,
+        "confidence_threshold": 0.31235069657748143,
+        "candidate_limit": 4445
+      },
+      "configuration_id": "27d5971fe63ec673689f5efc4f8955c7873817bc2361f7034787e462f4b81683",
+      "trials": 3,
+      "split": "validation",
+      "sampler": "tpe",
+      "seed": 42
+    },
+    "trials": [
+      {
+        "id": "95d25fa5-72db-4a33-aa42-96138bd9b0e3",
+        "study_id": "3866e9c5-bc37-4d9c-8922-44542c9e3ccb",
+        "number": 0,
+        "parameters": {
+          "window": 8,
+          "change_penalty": 2.857071488588757,
+          "top_k": 4,
+          "functional_weight": 0.559195090518222,
+          "chord_weight": 0.07800932022121826,
+          "section_weight": 0.062397808134481064,
+          "boundary_weight": 0.023233444867279785,
+          "insertion": 0.8795585311974417,
+          "deletion": 0.6410035105688879,
+          "substitution": 0.7080725777960455,
+          "confidence_threshold": 0.31235069657748143,
+          "candidate_limit": 4445
+        },
+        "value": 1.0,
+        "state": "COMPLETE"
+      },
+      {
+        "id": "db2b48ea-2784-43e9-9ba7-058b68c13ef5",
+        "study_id": "3866e9c5-bc37-4d9c-8922-44542c9e3ccb",
+        "number": 1,
+        "parameters": {
+          "window": 14,
+          "change_penalty": 0.7157834209670008,
+          "top_k": 1,
+          "functional_weight": 0.3100427059120603,
+          "chord_weight": 0.15212112147976886,
+          "section_weight": 0.20990257265289514,
+          "boundary_weight": 0.17277800745684632,
+          "insertion": 0.36210622617823773,
+          "deletion": 0.6506676052501416,
+          "substitution": 0.13949386065204183,
+          "confidence_threshold": 0.47528678912113087,
+          "candidate_limit": 418
+        },
+        "value": 1.0,
+        "state": "COMPLETE"
+      },
+      {
+        "id": "b2826df2-6f5a-4bdc-94f8-6f88664adce5",
+        "study_id": "3866e9c5-bc37-4d9c-8922-44542c9e3ccb",
+        "number": 2,
+        "parameters": {
+          "window": 9,
+          "change_penalty": 2.3770102880397395,
+          "top_k": 1,
+          "functional_weight": 0.508540663048167,
+          "chord_weight": 0.29620728443102123,
+          "section_weight": 0.01858016508799909,
+          "boundary_weight": 0.24301794076057537,
+          "insertion": 0.2534717113185624,
+          "deletion": 0.1585464336867516,
+          "substitution": 0.9488855372533332,
+          "confidence_threshold": 0.8793792198447357,
+          "candidate_limit": 2361
+        },
+        "value": 0.6666666666666666,
+        "state": "COMPLETE"
+      }
+    ]
+  }
+]

@@ -116,6 +116,35 @@ Browser tests require the demo-loaded API, worker, and frontend to be running. S
 
 See [verification results](docs/demo-results.md) for checks actually executed in this delivery, rather than treating the presence of a test as proof it passed.
 
+## Verify the Docker deployment
+
+The full local Docker workflow has passed. See [Docker verification results](docs/docker-results.md) for executed checks and measured latency.
+
+After the stack is healthy, run the bounded synthetic workflow against its PostgreSQL-backed API:
+
+```powershell
+.\.venv\Scripts\python scripts/docker_smoke.py
+```
+
+This explicitly runs demo import and reimport, four search modes, all baselines and ablations on six validation queries, a three-trial optimization, and JSON/CSV report export. Results are saved under `artifacts/docker-verification`. It does not start the long research preset.
+
+Run the complete Python suite in a separate verification image and database:
+
+```powershell
+docker compose exec db createdb -U harmony harmonygraph_verification
+docker compose --profile verification run --build --rm verify
+```
+
+Create the verification database only once. Its PostgreSQL checks create and remove their own isolated schemas. Production images omit testing dependencies.
+
+Then check the production web interface:
+
+```powershell
+cd web
+$env:BASE_URL = 'http://127.0.0.1:8080'
+npm run test:e2e
+```
+
 ## Operational details
 
 Jobs use row locking, leases, a heartbeat, cooperative cancellation, and stale-job recovery. Failed analyses never replace the active version. Cache entries contain immutable per-song snapshots and are bounded to 256 songs / 50,000 events. APIs expose status and timing; worker logs include job IDs. Dataset and experiment jobs perform expensive work offline.

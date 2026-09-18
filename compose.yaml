@@ -59,6 +59,17 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+  verify:
+    profiles: ["verification"]
+    build:
+      context: .
+      target: verification
+    environment:
+      DATABASE_URL: postgresql+psycopg://harmony:${POSTGRES_PASSWORD:-local-harmonygraph}@db:5432/harmonygraph_verification
+      TEST_POSTGRES_URL: postgresql+psycopg://harmony:${POSTGRES_PASSWORD:-local-harmonygraph}@db:5432/harmonygraph_verification
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   postgres_data:
   artifacts_data:
