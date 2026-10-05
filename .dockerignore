@@ -4,6 +4,7 @@ web
 artifacts
 data/local
 data/imports
+data/chordonomicon
 **/__pycache__
 **/*.egg-info
 .env

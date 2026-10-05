@@ -20,6 +20,8 @@ services:
     environment: &backend_environment
       DATABASE_URL: postgresql+psycopg://harmony:${POSTGRES_PASSWORD:-local-harmonygraph}@db:5432/harmonygraph
       DATA_ROOT: /app/data
+      HARMONY_CA_FILE: /app/data/local/network-root.pem
+      CATALOG_DATABASE_BUDGET_GB: ${CATALOG_DATABASE_BUDGET_GB:-20}
     depends_on:
       db:
         condition: service_healthy
@@ -41,12 +43,27 @@ services:
       retries: 10
     restart: unless-stopped
   worker:
+    stop_grace_period: 30s
     build: .
     command: ["harmonygraph", "worker"]
     environment: *backend_environment
     volumes:
-      - ./data:/app/data:ro
+      - ./data:/app/data
       - artifacts_data:/app/artifacts
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  metadata:
+    stop_grace_period: 30s
+    build: .
+    command: ["harmonygraph", "worker"]
+    environment:
+      <<: *backend_environment
+      JOB_KINDS: catalog_metadata
+      METADATA_REQUEST_INTERVAL: "0.25"
+    volumes:
+      - ./data:/app/data:ro
     depends_on:
       migrate:
         condition: service_completed_successfully

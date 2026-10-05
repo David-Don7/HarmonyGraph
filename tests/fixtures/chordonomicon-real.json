@@ -1,0 +1,59 @@
+{
+  "source": "https://huggingface.co/datasets/ailsntua/Chordonomicon",
+  "revision": "f3a8b678bd65639c01caa342921733f1db01be23",
+  "license": "CC-BY-NC-4.0",
+  "purpose": "Small real-source fixtures for isolated automated tests; never seeded by consumer startup.",
+  "records": [
+    {
+      "raw": {
+        "id": "10306",
+        "chords": "<verse_1> C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C Dmin C F C F C F C F C Bb F C Amin C Amin C Amin C Amin F <verse_2> C F C F C Dmin C Dmin C F C F C F C F C Bb F C Dmin C Dmin C Dmin C <verse_3> F C F C Dmin C Dmin C F C F C F C F C Bb F C Dmin C Dmin C Dmin C F <verse_4> Amin7 Gmin Amin C7 C F C Dmin C F C F C F C F C Bb F C G <verse_5> Amin G F C G Amin G F C Dmin C F C F C F C F C Bb F C F C <verse_6> Dmin C F C Dmin C F C F G7 C Dmin G C G C",
+        "release_date": "1957-12-30",
+        "genres": "'classic bollywood' 'filmi'",
+        "decade": "1950.0",
+        "rock_genre": "",
+        "artist_id": "artist_5883",
+        "main_genre": "",
+        "spotify_song_id": "6Im0l2HF8ctiYc8nSCOC4C",
+        "spotify_artist_id": "0gXDpqwYNDODn7fB0RDN8J"
+      },
+      "title": "Yeh Duniya Agar Mil Bhi Jaye To",
+      "artist": "Mohammed Rafi",
+      "artwork": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02cc1ddf35a21b76521189510d"
+    },
+    {
+      "raw": {
+        "id": "10000",
+        "chords": "<intro_1> A Asus2 A Asus2 E D A Asus2 A Asus2 E D <verse_1> A Asus2 A Asus2 E D A Asus2 A Asus2 E D A Asus2 A Asus2 E D A Asus2 A Asus2 E D <chorus_1> A Asus2 Asus4 A D Dmaj7 A D Dmaj7 A D Dmaj7 A D <verse_2> A E D A E D A E D A E D Abmin A D Dmaj7 Abmin A D Dmaj7 Abmin A D Dmaj7 <chorus_2> A Asus2 Asus4 A D Dmaj7 A D Dmaj7 A D Dmaj7 A D <outro_1> A Asus2 Asus4 A D Dmaj7 A Asus2 Asus4 A D Dmaj7 A Asus2 A Asus2 A",
+        "release_date": "2000-01-31",
+        "genres": "'belgian rock' 'classic belgian pop' 'flemish folk' 'kleinkunst'",
+        "decade": "1990.0",
+        "rock_genre": "belgian rock",
+        "artist_id": "artist_4539",
+        "main_genre": "pop rock",
+        "spotify_song_id": "4dwGGn2WsPPcrWJJ19PkrS",
+        "spotify_artist_id": "7CAtmuyGlzYum4BKfl34ij"
+      },
+      "title": "Duitsland Wint Altijd",
+      "artist": "Gorki",
+      "artwork": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02ab7f04cf7cbfb866a4cf1063"
+    },
+    {
+      "raw": {
+        "id": "100053",
+        "chords": "<intro_1> E A E A E A Csmin E <verse_1> A E Csmin E A E Csmin E A E Csmin E A E Csmin E <instrumental_1> A E Csmin E A E Csmin E <verse_2> A E Csmin E A E Csmin E A E Csmin E A E Csmin E A E Csmin E <verse_3> Csmin E Csmin E A Csmin A Csmin A Csmin A Csmin A Csmin A Csmin <chorus_1> E A E Csmin E A E Csmin E A E A Csmin E A E Csmin E A E Csmin E",
+        "release_date": "2010-11-02",
+        "genres": "'indie folk' 'stomp and holler'",
+        "decade": "2000.0",
+        "rock_genre": "",
+        "artist_id": "artist_13636",
+        "main_genre": "country",
+        "spotify_song_id": "0KzyweyZCAuqsn1It1t9np",
+        "spotify_artist_id": "6ltzsmQQbmdoHHbLZ4ZN25"
+      },
+      "title": "Son of a Gun",
+      "artist": "Lord Huron",
+      "artwork": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e028b7bfe1f6ed2337c5e66e64f"
+    }
+  ]
+}

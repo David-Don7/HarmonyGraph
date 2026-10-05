@@ -4,11 +4,12 @@ import numpy as np
 from sqlalchemy import select
 from .db import ChordEvent, FunctionalInterpretation, HarmonicRelation, SongAnalysis, SourceAnnotation
 from .metrics import boundary_metrics, uncertainty_metrics
-from .music import key_index
+from .music import key_index, pitch
 
 
 def harmonic_evaluation(session, analysis_id, song_ids, top_k):
     probabilities, references, roman_hits = [], [], []
+    tonic_probabilities, tonic_references = [], []
     boundary_scores = {"key_boundaries": [], "modulation_boundaries": [], "cadence_boundaries": []}
     for song_id in song_ids:
         source = session.scalar(select(SourceAnnotation).where(SourceAnnotation.song_id == song_id))
@@ -19,6 +20,20 @@ def harmonic_evaluation(session, analysis_id, song_ids, top_k):
         events = list(
             session.scalars(select(ChordEvent).where(ChordEvent.song_id == song_id).order_by(ChordEvent.ordinal))
         )
+        # Tonic-only evidence is evaluated after marginalizing mode. It never
+        # becomes an invented major/minor ground-truth label.
+        for position, label in annotations.get("event_tonics", {}).items():
+            if label in {None, "?", "N", "unknown"}:
+                continue
+            position = int(position)
+            if not 0 <= position < len(events):
+                raise ValueError("Reference tonic position is outside the song")
+            tonic = pitch(label) if isinstance(label, str) else int(label)
+            if not 0 <= tonic < 12:
+                raise ValueError("Reference tonics must be pitch classes 0–11")
+            p = np.asarray(analysis.posterior[position])
+            tonic_probabilities.append(p[:12] + p[12:])
+            tonic_references.append(tonic)
         reference_keys = {}
         for position, label in annotations.get("event_keys", {}).items():
             position = int(position)
@@ -80,6 +95,7 @@ def harmonic_evaluation(session, analysis_id, song_ids, top_k):
                 predicted = [r.end for r in relations if r.kind in kinds]
             accumulated.append(boundary_metrics(predicted, annotations[metric], tolerance=1))
     report = {
+        "tonic_uncertainty": uncertainty_metrics(tonic_probabilities, tonic_references, min(top_k, 12)),
         "uncertainty": uncertainty_metrics(probabilities, references, top_k),
         "reference_key_events": len(references),
         "roman_accuracy": {"available": True, "accuracy": float(np.mean(roman_hits)), "events": len(roman_hits)}

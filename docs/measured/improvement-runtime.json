@@ -1,0 +1,58 @@
+{
+  "observed_at": "2026-09-19T01:26:28.739940+00:00",
+  "coverage": {
+    "imported_records": 679807,
+    "resolved_records": 5908,
+    "identified_tracks": 430323,
+    "named_songs": 5052,
+    "searchable_songs": 3304,
+    "unresolved_records": 673899,
+    "unavailable_records": 239523,
+    "snapshot_id": "89e6b8d6c90eedfd2da9bf3cd9ca12ae5dad4fd55f608970fa68400c224df870",
+    "import_complete": true,
+    "genres": [
+      "alternative",
+      "country",
+      "electronic",
+      "jazz",
+      "metal",
+      "pop",
+      "pop rock",
+      "punk",
+      "rap",
+      "reggae",
+      "rock",
+      "soul"
+    ],
+    "source": "https://huggingface.co/datasets/ailsntua/Chordonomicon",
+    "license": "CC-BY-NC-4.0"
+  },
+  "database_bytes": 5001546899,
+  "stages": {
+    "catalog_analyze": {
+      "status": "running",
+      "last_batch": {
+        "indexed_this_batch": 20,
+        "indexed": 3752,
+        "seconds": 12.959261149999293,
+        "continue": true
+      },
+      "error": null
+    },
+    "catalog_metadata": {
+      "status": "running",
+      "last_batch": {
+        "resolved_this_batch": 250,
+        "continue": true
+      },
+      "error": null
+    }
+  },
+  "index_throughput": {
+    "from": "2026-09-19T01:24:34.882843+00:00",
+    "to": "2026-09-19T01:26:26.791697+00:00",
+    "chart_artifacts": 140,
+    "seconds": 111.908854,
+    "chart_artifacts_per_minute": 75.06108497903124
+  }
+}

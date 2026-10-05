@@ -1,81 +1,43 @@
-# HarmonyGraph: Uncertainty-Aware Functional Harmony Retrieval
+# HarmonyGraph: Context-Sensitive Harmonic Passage Retrieval under Tonal Uncertainty
 
-**Status:** research paper scaffold. Synthetic software demonstrations only; expert annotation and real-corpus evaluation are pending.
+**Status:** methods scaffold and bounded computational checks. Independent annotation, strong prior-work comparisons and held-out findings are pending. This document follows [research v2](research-proposal-v2.md) and the [novelty audit](novelty-audit-2026-10-01.md).
 
-## Abstract
+## Research questions
 
-HarmonyGraph is a reproducible platform for investigating local harmonic uncertainty in symbolic progression retrieval. It combines a 24-state major/minor Hidden Markov Model, weighted functional interpretations, structural constraints, indexed candidate generation, theory-informed alignment, and auditable scoring. This implementation supports controlled baselines, ablations, and validation-only hyperparameter optimization. Claims about retrieval superiority, generalization, and explanation usefulness require the planned external-corpus and human evaluations.
+Does marginalizing coherent key/function paths help context-sensitive functional retrieval compared with deterministic paths and averaged-key mixtures? Does it distinguish similar chord surfaces in different natural contexts? What is lost through path and candidate pruning? These are questions, not demonstrated advantages. HMMs, posterior marginalization, alignment and elementary probability bounds are established tools.
 
-## 1. Motivation and research questions
+## Task and data
 
-Global key assumptions and exact chord names can conceal functional equivalence. Conversely, a confident but incorrect local analysis can propagate errors through retrieval. The principal question is whether preserving alternatives and section context improves ranked passage retrieval compared with literal, interval, global-key, deterministic-local, and uniform-edit methods.
+Primary queries contain 2–8 explicit Roman numerals. Required section/boundary conditions are hard filters; optional preferences are separate. The evidence is chord-only, in a Western major/minor idiom. Modal or unsupported contexts remain limitations. Roman degree, broad harmonic function and harmonic cadence candidates are distinct claims.
 
-## 2. Data and provenance
+Chordonomicon supplies naturally occurring chord charts, not passage-relevance truth. Preserve the pinned release, file checksum, source rows and CC-BY-NC-4.0 attribution. Billboard tonic labels do not imply mode; Isophonics missing changes are not evidence that no change occurred. Audit external reference coverage before using it. Synthetic fixtures test algorithms only.
 
-The included demonstration comprises 120 original synthetic songs with explicit section labels, transformed across all twelve roots. Constructed labels describe fixture intent and are not expert judgments. Chordonomicon, McGill Billboard, and Isophonics adapters accept user-supplied releases. Raw annotations remain separate from inferences. Input fingerprints, algorithm versions, configuration hashes, and split manifests identify all experiments.
+## Implemented method
 
-Report for the final study: release identifiers; license and attribution; imported/rejected/unknown counts; duplicate groups; artist coverage; genre and period distributions; benchmark sampling; independent annotator qualifications; disagreement and adjudication procedure.
+`context-path-expectation-v1` uses the existing 24-state HMM emission/transition model and full chart context. Forward/backward messages marginalize states outside a passage. Inside it, posterior conditional transitions define coherent key paths. Function alternatives depend on the path key and the following observed chord; their conditional weights remain unvalidated theory assumptions.
 
-## 3. Method
+A prefix key beam and a conditional function beam retain distinct complete passage assignments with their original normalized-model probabilities. They are not guaranteed to be the globally highest-probability joint paths. The query never changes the path distribution. Weighted global dynamic programming finds each retained path's best alignment, with deterministic diagonal/deletion/insertion tie order and normalization by the larger sequence length.
 
-### Canonical representation
+Primary score is the retained partial expectation `L = sum p(z|context) a(Q,P,z)`. Joint retained mass is `m`; the complete-model expectation satisfies `L <= S <= L + 1 - m`. This is not a confidence interval for human relevance. Match-probability bounds at a specified threshold are a separate output, never substituted for the rank score. Optional preferences combine as `(L + w_section*s + w_boundary*b)/(1+w_section+w_boundary)`; the same transform applies to score bounds. There is no extra observed-quality term multiplied by beam mass.
 
-Chord events retain original spelling, root pitch class, quality, pitch-class intervals, bass, event order, section, and available timing. Unsupported chords and no-chord events are distinct. Functional Roman numerals use major-reference altered scale degrees in both modes, with lowercase minor triads.
+The old passage-averaged-key method remains `legacy_mixture`. Hard-path, maximum, equal-weight, shuffled-weight and uniform-cost controls are explicitly labelled. Their diagnostic scores must not be mistaken for the primary expected score. Indexed candidate generation unions retained functional postings and key-free quality/interval evidence. Candidate omission is audited separately from path truncation. Membership certificates refer only to evaluated candidates.
 
-### Local-key uncertainty
+## Evaluation protocol and gates
 
-Emission evidence combines scale compatibility, tonic and dominant evidence, bounded duration weights, and moving-window context. The transition model discourages changes and reduces that penalty at section boundaries. Forward-backward yields marginal posteriors; Viterbi yields a separate most likely path. The full 24-state posterior is retained. Top-k retained mass is exposed without renormalizing it for probabilistic retrieval.
+The current deliverable is a bounded computational audit and eight-example chord-only review packet. Source-ordered natural sections are not an expert-verified ambiguity benchmark. A 24–30-query pilot requires qualified independent reviewers; a later approximately 120-query study depends on feasibility and variance.
 
-The first rule system handles major/minor tonality and conditional secondary-dominant and parallel-mode borrowing interpretations. These are explicit heuristics. They are neither a learned theory model nor a guarantee of calibrated probabilities.
+The development runner shares candidate starts, configuration, analysis and hard filters across methods. Primary labels are resolved adjudications; independent-rater sensitivity is supported separately. Missing and unresolved judgments are excluded from ground truth, not converted to grade zero. Relevance gain is 0/1/3, with source/query-family clustered paired bootstrap intervals. Raw disagreements and adjudication provenance remain stored. Audio-assisted ratings are separate.
 
-### Candidate retrieval and alignment
+Hanna-style local-transposition alignment, a faithful documented HarmTrace adaptation, a train-only chord-sequence embedding and expected-local-cost alignment remain required comparisons before research superiority claims. Their absence is an explicit study gate. The v2 runner refuses held-out queries until a full study protocol is implemented and frozen; legacy test results do not satisfy that gate.
 
-Position-aware token/interval postings generate candidate starts. Literal n-grams are materialized. Structural constraints eliminate impossible positions before reranking. Approximate queries explore bounded insertion/deletion drift and passage lengths; candidate truncation is reported. An explicit exhaustive audit measures candidate-start recall on a bounded corpus.
+## Results
 
-Weighted dynamic programming separates insertions, deletions, repeated chords, and degree/function/quality disagreement. A bounded interpretation beam integrates functional alternatives. Explanations expose the chosen alignment and the retained interpretation mass.
+See [the alignment report](research-v2-alignment.md) for executed algorithm tests and the bounded real-chart audit. No independently judged retrieval relevance, explanation usefulness, calibrated-function performance or research superiority result has been established.
 
-### Ranking
+## Limitations and reproducibility
 
-The score follows the supplied four-component expectation, including chord similarity inside the key expectation. Only active optional structural score terms receive normalized weights. Required constraints are hard filters. Optional harmonic features break equal-score ties and do not introduce an undocumented fifth score term. Literal and transposed search use exact canonical matching as their acceptance criterion.
+Record release/content hashes, inference and path-model versions, query contexts, method settings, candidate budgets, exclusions, rubric, family/cover/cross-corpus overlap groups, cache/hardware state and test-use history. Small software fixtures cannot validate musical interpretation. Prefix pruning can lose substantial mass; high mass is not promised. The existing product metadata/catalog coverage is distinct from research evidence.
 
-### Reproducibility and optimization
+## Related work
 
-Grouped partitions connect songs sharing artist, declared duplicate group, or canonical content. Optimization uses the validation partition, seeded Optuna TPE or random sampling, persistent trial records, and optional latency constraints. A frozen manifest is required before test evaluation; subsequent test runs require an explicit recorded rerun.
-
-## 4. Experimental protocol
-
-1. Collect approximately 100–200 queries spanning the brief's categories.
-2. Pool candidates, retain unjudged status, obtain independent graded relevance labels, and document adjudication.
-3. Evaluate B1–B6 and the proposed configuration on identical query and corpus partitions.
-4. Run the eight component ablations and transfer experiments by genre, period, and dataset.
-5. Report pooled recall, nDCG, precision, MRR, MAP, judgment coverage, confidence intervals, and paired differences.
-6. Evaluate local-key and harmonic-reference annotations where available; mark missing metrics unavailable.
-7. Measure indexing cost, storage, warm/cold query latency, throughput, and candidate recall under stated hardware and corpus sizes.
-8. Freeze the complete manifest, perform the held-out evaluation, and report all outcomes, including negative findings.
-
-## 5. Results
-
-See `docs/demo-results.md` for executed software demonstrations and their exact limitations. These results must not be used as evidence supporting the research hypotheses.
-
-**Real-corpus retrieval results:** pending.
-
-**Expert harmonic-analysis and explanation evaluation:** pending.
-
-**Cross-domain generalization and full-corpus scalability:** pending.
-
-## 6. Limitations
-
-The default tonal state space excludes independent modal keys. Rule-based functional alternatives cannot resolve all musical ambiguity. Chord-only cadence candidates omit melodic and voice-leading evidence. Bounded indexing can miss fuzzy matches, especially when few query tokens survive. Confidence is not established calibration. The synthetic corpus is small and deliberately regular. Named local profiles support independent workflow views, not authenticated identities. SQLite is a development fallback; PostgreSQL is the deployment and concurrency target.
-
-## 7. Reproducibility checklist
-
-Archive the dataset fingerprint, source adapters, parsing report, algorithm and dependency versions, frozen configuration, split and benchmark hashes, annotation audit history, experiment export, and measurement environment. Report final-test reruns. Do not omit failed or pruned optimization trials.
-
-## References to complete and verify
-
-- Kantarelis et al. CHORDONOMICON: A Dataset of 666,000 Songs and their Chord Progressions. https://arxiv.org/abs/2410.22046
-- Burgoyne, Wild, and Fujinaga. An Expert Ground Truth Set for Audio Chord Recognition and Music Analysis. ISMIR 2011.
-- Isophonics reference annotation documentation: https://isophonics.net/content/reference-annotations.html
-- Akiba et al. Optuna: A Next-generation Hyperparameter Optimization Framework. https://arxiv.org/abs/1907.10902
-
-Add and verify the theoretical key-profile, alignment, calibration, and statistical references used in the final study before submission.
+Use the source-linked comparisons in [the novelty audit](novelty-audit-2026-10-01.md), especially Hanna, Robine and Rocher (2009), HarmTrace (2011), and prior probabilistic tonal/harmonic retrieval. Implementations must be documented adaptations or validated reproductions, never relabelled authors' results. Hyperparameter optimization is methodology, not the principal contribution.

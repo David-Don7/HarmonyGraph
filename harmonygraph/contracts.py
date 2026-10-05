@@ -72,6 +72,12 @@ class AnalysisConfig(StrictModel):
 class SearchRequest(StrictModel):
     progression: str = ""
     mode: Literal["literal", "transposed", "functional", "fuzzy"] = "functional"
+    ranking: Literal["legacy_mixture", "path_expectation", "hard_path", "max_path", "equal_paths", "shuffled_paths"] = (
+        "legacy_mixture"
+    )
+    path_budget: int = Field(default=64, ge=1, le=4096)
+    function_budget: int = Field(default=16, ge=1, le=256)
+    match_threshold: float = Field(default=0.8, ge=0, le=1)
     pattern: Literal["progression", "relative_minor_modulation"] = "progression"
     section: str | None = None
     preferred_section: str | None = None
@@ -91,6 +97,7 @@ class SearchRequest(StrictModel):
     analysis_id: str | None = None
     dataset_ids: list[str] = []
     song_ids: list[str] = []
+    catalog_snapshot: str | None = None
 
     @model_validator(mode="after")
     def validate_query(self):
@@ -98,6 +105,14 @@ class SearchRequest(StrictModel):
             raise ValueError("Enter a chord or Roman-numeral progression")
         if self.year_from and self.year_to and self.year_from > self.year_to:
             raise ValueError("The start year must precede the end year")
+        if self.ranking != "legacy_mixture":
+            from .music import tokenize, roman_features
+
+            tokens = tokenize(self.progression)
+            if self.mode not in {"functional", "fuzzy"} or self.pattern != "progression" or not 2 <= len(tokens) <= 8:
+                raise ValueError("Research v2 requires an explicit functional query of 2–8 Roman numerals")
+            for token in tokens:
+                roman_features(token)
         return self
 
 
@@ -133,7 +148,19 @@ class JudgmentInput(StrictModel):
     query_id: str
     passage_id: str
     annotator_id: str
-    relevance: int = Field(ge=0, le=2)
+    relevance: int | None = Field(default=None, ge=0, le=2)
+    status: Literal["judged", "insufficient_context", "unsupported", "unresolved"] = "judged"
+    supported_interpretations: list[str] = []
+    section_correct: bool | None = None
+    evidence_basis: Literal["chord-only", "audio-assisted"] = "chord-only"
+    adjudication_sources: list[str] = []
+
+    @model_validator(mode="after")
+    def judgment_status(self):
+        if (self.status == "judged") != (self.relevance is not None):
+            raise ValueError("Provide a relevance grade only for judged cases; unresolved cases must have a null grade")
+        return self
+
     correctness: int | None = Field(default=None, ge=1, le=5)
     clarity: int | None = Field(default=None, ge=1, le=5)
     usefulness: int | None = Field(default=None, ge=1, le=5)
@@ -142,7 +169,18 @@ class JudgmentInput(StrictModel):
 
 
 class JobInput(StrictModel):
-    kind: Literal["demo", "import", "analyze", "evaluate", "optimize", "export"]
+    kind: Literal[
+        "demo",
+        "import",
+        "analyze",
+        "evaluate",
+        "optimize",
+        "export",
+        "catalog_download",
+        "catalog_import",
+        "catalog_metadata",
+        "catalog_analyze",
+    ]
     parameters: dict = {}
 
 

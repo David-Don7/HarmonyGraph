@@ -16,18 +16,16 @@ from .db import (
     Section,
     Song,
     SongAnalysis,
+    uid,
 )
 from .music import Chord, infer_keys, interpret, roman_features
 
 
-def corpus_hash(session):
-    return fingerprint(
-        list(
-            session.execute(
-                select(Song.id, Song.content_hash, Dataset.fingerprint).join(Dataset).order_by(Song.id)
-            ).tuples()
-        )
-    )
+def corpus_hash(session, song_ids=None):
+    query = select(Song.id, Song.content_hash, Dataset.fingerprint).join(Dataset).order_by(Song.id)
+    if song_ids is not None:
+        query = query.where(Song.id.in_(song_ids))
+    return fingerprint(list(session.execute(query).tuples()))
 
 
 def save_config(session, config, name="Manual defaults"):
@@ -38,11 +36,11 @@ def save_config(session, config, name="Manual defaults"):
     return config_id
 
 
-def analyze(session, config=None, activate=True, progress=lambda p: None):
+def analyze(session, config=None, activate=True, progress=lambda p: None, song_ids=None):
     started = time.perf_counter()
     config = config or AnalysisConfig()
     config_id = save_config(session, config)
-    corpus = corpus_hash(session)
+    corpus = corpus_hash(session, song_ids)
     cached = session.scalar(
         select(AnalysisRun).where(
             AnalysisRun.configuration_id == config_id, AnalysisRun.corpus_hash == corpus, AnalysisRun.status == "ready"
@@ -57,7 +55,7 @@ def analyze(session, config=None, activate=True, progress=lambda p: None):
     run = AnalysisRun(configuration_id=config_id, corpus_hash=corpus)
     session.add(run)
     session.commit()
-    ids = list(session.scalars(select(Song.id).order_by(Song.id)))
+    ids = sorted(song_ids) if song_ids is not None else list(session.scalars(select(Song.id).order_by(Song.id)))
     try:
         for number, song_id in enumerate(ids):
             process_song(session, song_id, run.id, config)
@@ -97,18 +95,19 @@ def process_song(session, song_id, run_id, config):
     posterior, path = infer_keys(chords, [e.section_id for e in events], [e.duration for e in events], config)
     session.add(SongAnalysis(analysis_id=run_id, song_id=song_id, posterior=posterior.tolist(), path=path))
     functions = defaultdict(list)
+    hypothesis_rows, interpretation_rows = [], []
     for i, (event, chord) in enumerate(zip(events, chords)):
         keys = np.argsort(posterior[i])[::-1][: config.top_k if config.uncertainty else 1]
         for key in keys:
             confidence = float(posterior[i, key])
             hypothesis = LocalKeyHypothesis(
-                analysis_id=run_id, event_id=event.id, key_index=int(key), confidence=confidence
+                id=uid(), analysis_id=run_id, event_id=event.id, key_index=int(key), confidence=confidence
             )
-            session.add(hypothesis)
-            session.flush()
+            hypothesis_rows.append({c.name: getattr(hypothesis, c.name) for c in hypothesis.__table__.columns})
             for alternative in interpret(chord, int(key), chords[i + 1] if i + 1 < len(chords) else None):
-                session.add(
-                    FunctionalInterpretation(
+                interpretation_rows.append(
+                    dict(
+                        id=uid(),
                         hypothesis_id=hypothesis.id,
                         event_id=event.id,
                         analysis_id=run_id,
@@ -212,6 +211,9 @@ def process_song(session, song_id, run_id, config):
                     )
                 )
             chain_start = None
+    if hypothesis_rows:
+        session.execute(LocalKeyHypothesis.__table__.insert(), hypothesis_rows)
+        session.execute(FunctionalInterpretation.__table__.insert(), interpretation_rows)
     sections = list(session.scalars(select(Section).where(Section.song_id == song_id)))
     for section in sections:
         last = section.end

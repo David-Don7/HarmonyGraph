@@ -1,0 +1,495 @@
+{
+  "manifest": {
+    "version": "context-path-expectation-v1",
+    "analysis_id": "f5261742-e253-46ca-8dbb-bc1d8fd40228",
+    "configuration": {
+      "algorithm": "hmm-functional-v4",
+      "window": 8,
+      "change_penalty": 1.8,
+      "top_k": 3,
+      "confidence_threshold": 0.5,
+      "functional_weight": 0.6,
+      "chord_weight": 0.25,
+      "section_weight": 0.1,
+      "boundary_weight": 0.05,
+      "insertion": 0.6,
+      "deletion": 0.6,
+      "substitution": 0.8,
+      "repetition": 0.15,
+      "candidate_limit": 500,
+      "seed": 42,
+      "uncertainty": true,
+      "local_keys": true,
+      "functions": true,
+      "sections": true,
+      "boundaries": true,
+      "theory_costs": true,
+      "qualities": true
+    },
+    "datasets": {
+      "dd57010656daf95289ab9734fb7375b1cbbaa4140f8bc2ed5b058156e01f92a3": {
+        "name": "Chordonomicon f3a8b678bd65639c01caa342921733f1db01be23: first 8 charts with 6\u201380 events",
+        "source": "chordonomicon",
+        "fingerprint": "dd57010656daf95289ab9734fb7375b1cbbaa4140f8bc2ed5b058156e01f92a3",
+        "license": "CC-BY-NC-4.0"
+      }
+    },
+    "songs": [
+      [
+        "215a07e185882b8fe79a29fa8ca1dc81fd5f044983c91845bb64ee901c166e48",
+        "0b75dd69ada67e95c595dc15cd8071ea164f6f59e2e6428c9749b14861166e55"
+      ],
+      [
+        "2394ca3f597400bac32d42571e87bfb816753f49e73f40ef7de70951d5922a33",
+        "5f1b74521ece3db3f382be5f8585b0a675a660ee2ecacdadeef167b7d0f03644"
+      ],
+      [
+        "23cddb7ac3e6c0369a736bbd171526deed1249dd83939a8f6b7ac9b780ba9d37",
+        "536efd98dace284a33d4a64353981e3129fc0120fc77c9006a8aa92d8c80e1f6"
+      ],
+      [
+        "2aa9cc7595781951b5ad97319e67958ddaf66ffcc3fa1b67370f206dc4aa3991",
+        "7e675437a5aa1a689192be5ba1490d6e4dac3ed137eaffad7439f1cb30cb4a5d"
+      ],
+      [
+        "8467eda8027122eb93bd3d74ce6b5aca9f40412feb0066efe470b0fcdf017454",
+        "761d6e0f0fbf92cafbd8c96431d01b3cb724579f5dea0ba7919b17cb724c22a3"
+      ],
+      [
+        "8cf8568bf478d89464bd123e37e8bc2f18abf4f788329178cde33ef90fa765fb",
+        "5cb648bc3f261f6fc49802f0a2faf4d5af45e45a2e1f2543a1d2d4d42de324aa"
+      ],
+      [
+        "9975f869e3c71b17e7e7b42a1c0d2d93f65235f0bfc3569abbfa08dbfbf5db1a",
+        "c2ccd01fa0aadf613030bb047e6b242b6daba7ded91e0999f2bb34767bb8b3b1"
+      ],
+      [
+        "f60460d0033329a7bd5d9c24a7eace0906a9015528c137f56b947320216fe53b",
+        "932ba42f950c49c7822097abb3af2080f39aef332f1c5772c9f22140c114a710"
+      ]
+    ],
+    "selection": "Source-order section openings; not a representative or ambiguity-labelled sample",
+    "environment": {
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.4",
+      "concurrency": 1,
+      "cache": "in-process evidence cache; sequential budget calls"
+    }
+  },
+  "manifest_hash": "f7918c0107b608c0a8905f4ebdb4660796a8bb8ffeb4e3f5b0288c2bce0e7430",
+  "coverage": {
+    "real_songs": 8,
+    "events": 469,
+    "known": 469
+  },
+  "unknown_labels": {},
+  "approximation_curves": [
+    {
+      "passage_id": "2394ca3f597400bac32d42571e87bfb816753f49e73f40ef7de70951d5922a33:0:2",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 2.3520999966422096,
+          "mass": 0.987240558868048,
+          "score": 0.5116885708527467,
+          "bounds": [
+            0.5116885708527467,
+            0.5244480119846988
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 3.383400005986914,
+          "mass": 0.9953361895719269,
+          "score": 0.5157169048136336,
+          "bounds": [
+            0.5157169048136336,
+            0.5203807152417067
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 9.726099997351412,
+          "mass": 0.9992247559414167,
+          "score": 0.517677048169324,
+          "bounds": [
+            0.517677048169324,
+            0.5184522922279073
+          ],
+          "joint_paths": 64
+        }
+      ]
+    },
+    {
+      "passage_id": "f60460d0033329a7bd5d9c24a7eace0906a9015528c137f56b947320216fe53b:0:2",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 1.9007000009878539,
+          "mass": 0.9444841910170585,
+          "score": 0.7090025168564658,
+          "bounds": [
+            0.7090025168564658,
+            0.7645183258394073
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 3.8115999996080063,
+          "mass": 0.980834820042719,
+          "score": 0.7295536144733504,
+          "bounds": [
+            0.7295536144733504,
+            0.7487187944306315
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 9.977200003049802,
+          "mass": 0.9967405831627394,
+          "score": 0.7388336642732433,
+          "bounds": [
+            0.7388336642732433,
+            0.7420930811105038
+          ],
+          "joint_paths": 64
+        }
+      ]
+    },
+    {
+      "passage_id": "9975f869e3c71b17e7e7b42a1c0d2d93f65235f0bfc3569abbfa08dbfbf5db1a:0:2",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 1.6202999977394938,
+          "mass": 0.9155921932001331,
+          "score": 0.390165254993438,
+          "bounds": [
+            0.390165254993438,
+            0.47457306179330494
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 2.5894999998854473,
+          "mass": 0.9646200109128146,
+          "score": 0.4123314310437279,
+          "bounds": [
+            0.4123314310437279,
+            0.44771142013091325
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 10.206700004346203,
+          "mass": 0.9902994060395106,
+          "score": 0.42373333809360686,
+          "bounds": [
+            0.42373333809360686,
+            0.4334339320540962
+          ],
+          "joint_paths": 64
+        }
+      ]
+    },
+    {
+      "passage_id": "2aa9cc7595781951b5ad97319e67958ddaf66ffcc3fa1b67370f206dc4aa3991:0:2",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 1.9468000027700327,
+          "mass": 0.8901710635752443,
+          "score": 0.6996996256135548,
+          "bounds": [
+            0.6996996256135548,
+            0.8095285620383105
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 3.512299997964874,
+          "mass": 0.9523210857212249,
+          "score": 0.7469253053492405,
+          "bounds": [
+            0.7469253053492405,
+            0.7946042196280158
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 12.175700001535006,
+          "mass": 0.9913486048242036,
+          "score": 0.7736407707933048,
+          "bounds": [
+            0.7736407707933048,
+            0.7822921659691012
+          ],
+          "joint_paths": 66
+        }
+      ]
+    },
+    {
+      "passage_id": "215a07e185882b8fe79a29fa8ca1dc81fd5f044983c91845bb64ee901c166e48:0:2",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 1.8696000042837113,
+          "mass": 0.9709652463734453,
+          "score": 0.27307663829967055,
+          "bounds": [
+            0.27307663829967055,
+            0.30211139192622527
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 3.9503000007243827,
+          "mass": 0.9903733714636853,
+          "score": 0.2803286498099129,
+          "bounds": [
+            0.2803286498099129,
+            0.2899552783462276
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 11.459200002718717,
+          "mass": 0.998193863200648,
+          "score": 0.2829046062559286,
+          "bounds": [
+            0.2829046062559286,
+            0.28471074305528066
+          ],
+          "joint_paths": 64
+        }
+      ]
+    },
+    {
+      "passage_id": "8cf8568bf478d89464bd123e37e8bc2f18abf4f788329178cde33ef90fa765fb:1:3",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 2.453699999023229,
+          "mass": 0.9870748675104232,
+          "score": 0.41537427066586363,
+          "bounds": [
+            0.41537427066586363,
+            0.42829940315544046
+          ],
+          "joint_paths": 8
+        },
+        {
+          "budget": 16,
+          "ms": 5.904099998588208,
+          "mass": 0.9967655095503835,
+          "score": 0.4193158438864437,
+          "bounds": [
+            0.4193158438864437,
+            0.42255033433606026
+          ],
+          "joint_paths": 31
+        },
+        {
+          "budget": 64,
+          "ms": 19.806600001174957,
+          "mass": 0.9992076353090095,
+          "score": 0.4204111579297379,
+          "bounds": [
+            0.4204111579297379,
+            0.42120352262072835
+          ],
+          "joint_paths": 123
+        }
+      ]
+    },
+    {
+      "passage_id": "2394ca3f597400bac32d42571e87bfb816753f49e73f40ef7de70951d5922a33:4:6",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 2.195599998231046,
+          "mass": 0.9703296509308341,
+          "score": 0.41020909024960983,
+          "bounds": [
+            0.41020909024960983,
+            0.4398794393187757
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 4.003100002591964,
+          "mass": 0.9944046591358369,
+          "score": 0.42195799460061234,
+          "bounds": [
+            0.42195799460061234,
+            0.4275533354647756
+          ],
+          "joint_paths": 16
+        },
+        {
+          "budget": 64,
+          "ms": 11.019899997336324,
+          "mass": 0.9979026644084452,
+          "score": 0.42363623957695157,
+          "bounds": [
+            0.42363623957695157,
+            0.4257335751685063
+          ],
+          "joint_paths": 64
+        }
+      ]
+    },
+    {
+      "passage_id": "f60460d0033329a7bd5d9c24a7eace0906a9015528c137f56b947320216fe53b:4:6",
+      "curves": [
+        {
+          "budget": 4,
+          "ms": 1.8701000008150004,
+          "mass": 0.9975605070009674,
+          "score": 0.7547582506659434,
+          "bounds": [
+            0.7547582506659434,
+            0.7571977436649759
+          ],
+          "joint_paths": 4
+        },
+        {
+          "budget": 16,
+          "ms": 4.240900001605041,
+          "mass": 0.9993917328574333,
+          "score": 0.7558537705976471,
+          "bounds": [
+            0.7558537705976471,
+            0.7564620377402138
+          ],
+          "joint_paths": 17
+        },
+        {
+          "budget": 64,
+          "ms": 12.91000000492204,
+          "mass": 0.999847079341907,
+          "score": 0.7561393567057572,
+          "bounds": [
+            0.7561393567057572,
+            0.7562922773638501
+          ],
+          "joint_paths": 74
+        }
+      ]
+    }
+  ],
+  "candidate_audit": {
+    "query": {
+      "progression": "ii V I",
+      "mode": "functional",
+      "ranking": "path_expectation",
+      "path_budget": 4,
+      "function_budget": 16,
+      "match_threshold": 0.8,
+      "pattern": "progression",
+      "section": null,
+      "preferred_section": null,
+      "boundary": null,
+      "preferred_boundary": null,
+      "boundary_distance": 0,
+      "genre": null,
+      "year_from": null,
+      "year_to": null,
+      "key": null,
+      "cross_sections": false,
+      "every_chorus": false,
+      "required_features": [],
+      "optional_features": [],
+      "tolerance": 0.45,
+      "limit": 20,
+      "analysis_id": "f5261742-e253-46ca-8dbb-bc1d8fd40228",
+      "dataset_ids": [],
+      "song_ids": [
+        "8cf8568bf478d89464bd123e37e8bc2f18abf4f788329178cde33ef90fa765fb",
+        "2394ca3f597400bac32d42571e87bfb816753f49e73f40ef7de70951d5922a33",
+        "f60460d0033329a7bd5d9c24a7eace0906a9015528c137f56b947320216fe53b",
+        "9975f869e3c71b17e7e7b42a1c0d2d93f65235f0bfc3569abbfa08dbfbf5db1a",
+        "8467eda8027122eb93bd3d74ce6b5aca9f40412feb0066efe470b0fcdf017454",
+        "23cddb7ac3e6c0369a736bbd171526deed1249dd83939a8f6b7ac9b780ba9d37",
+        "2aa9cc7595781951b5ad97319e67958ddaf66ffcc3fa1b67370f206dc4aa3991",
+        "215a07e185882b8fe79a29fa8ca1dc81fd5f044983c91845bb64ee901c166e48"
+      ],
+      "catalog_snapshot": null
+    },
+    "exhaustive_starts": 469,
+    "indexed_starts": 347,
+    "candidate_limit_reached": false,
+    "recall_of_exhaustive_model_top10": 1.0,
+    "scope": "These explicit songs, fixed beam and exact-length windows; not human relevance recall"
+  },
+  "human_relevance": null,
+  "explanation_usefulness": null,
+  "readiness": {
+    "method": "context-path-expectation-v1",
+    "primary_task": "Explicit 2\u20138 Roman numerals, chord-only context, expected best alignment per path",
+    "gates": {
+      "data": "Bounded audit and packet available; expert feasibility pending",
+      "method": "Exact tiny-case software checks required; musical validity unestablished",
+      "pilot": "Independent annotation and burden measurement pending",
+      "study": "Frozen held-out evaluation pending",
+      "paper": "No superiority or first-system claim"
+    },
+    "comparators": {
+      "controlled": [
+        "legacy_mixture",
+        "hard_path",
+        "path_expectation",
+        "uniform_path",
+        "max_path",
+        "equal_paths",
+        "shuffled_paths"
+      ],
+      "pending": [
+        "Hanna 2009 local-transposition reproduction/adaptation",
+        "HarmTrace 2011 faithful adaptation",
+        "train-only chord-sequence embedding",
+        "expected-local-cost alignment",
+        "global-key path control"
+      ]
+    },
+    "limitations": [
+      "24 major/minor states do not cover every musical idiom",
+      "Function weights are theory assumptions, not calibrated human probabilities",
+      "Bounded candidate generation may omit relevant passages",
+      "Strong prior-work comparators must run before comparative research claims"
+    ]
+  },
+  "publisher_release": {
+    "revision": "f3a8b678bd65639c01caa342921733f1db01be23",
+    "sha256": "9d2f4ccdc876a4e816712f128e4772b2af558c2a2923cce5be3a0364fbad9a8d",
+    "selection": "First 8 source records with 6\u201380 events; full chart context retained",
+    "metadata": "No network resolution; missing titles/artists remain unavailable"
+  },
+  "import": {
+    "dataset_id": "dd57010656daf95289ab9734fb7375b1cbbaa4140f8bc2ed5b058156e01f92a3",
+    "imported": 8,
+    "skipped": 0,
+    "invalid": 0,
+    "unknown_chords": 0,
+    "errors": []
+  },
+  "execution_notes": {
+    "date": "2026-10-02",
+    "cpu": "12th Gen Intel Core i5-12450HX, 12 logical processors",
+    "database": "isolated SQLite; database file 4,796,416 bytes",
+    "scope": "8 publisher charts; no track identity deduplication or relevance claims",
+    "peak_memory": "not instrumented in this run",
+    "latency_scope": "per-passage scoring, cached HMM messages; not end-to-end search p95"
+  }
+}

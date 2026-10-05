@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import os
+import signal
 import threading
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from sqlalchemy import select, update
+from sqlalchemy.exc import OperationalError
 from .contracts import AnalysisConfig
 from .db import Job, factory, make_engine, now
 
@@ -26,9 +28,12 @@ def claim_job(session, owner):
         .where(Job.status == "running", Job.updated_at < cutoff)
         .values(status="queued", owner=None, error="Worker lease expired; retrying idempotent job")
     )
-    job = session.scalar(
-        select(Job).where(Job.status == "queued").order_by(Job.created_at).with_for_update(skip_locked=True).limit(1)
+    statement = select(Job).where(Job.status == "queued", Job.updated_at <= now())
+    kinds = os.environ.get("JOB_KINDS", "")
+    statement = (
+        statement.where(Job.kind.in_(kinds.split(","))) if kinds else statement.where(Job.kind != "catalog_metadata")
     )
+    job = session.scalar(statement.order_by(Job.updated_at).with_for_update(skip_locked=True).limit(1))
     if job is None:
         session.commit()
         return None
@@ -60,6 +65,10 @@ def input_path(value):
 
 
 def dispatch(session, kind, parameters, progress):
+    if kind.startswith("catalog_"):
+        from .catalog import dispatch_catalog
+
+        return dispatch_catalog(session, kind, parameters, progress)
     from .analysis import analyze
     from .demo import generate, seed_benchmark
     from .ingestion import ingest
@@ -101,6 +110,7 @@ def dispatch(session, kind, parameters, progress):
             parameters.get("rerun", False),
             progress,
             parameters.get("domain"),
+            catalog_snapshot=parameters.get("catalog_snapshot"),
         )
     if kind == "optimize":
         return optimize(
@@ -150,30 +160,71 @@ def run_job(sessions, job_id, owner):
             result = dispatch(session, kind, parameters, progress)
         progress(1)
         with sessions() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job_id, Job.owner == owner)
-                .values(status="completed", result=result, progress=1.0, updated_at=now())
-            )
-            session.commit()
-        log.info(json.dumps({"event": "job_completed", "job_id": job_id, "kind": kind}))
-    except Exception as error:
-        with sessions() as session:
+            repeat = result.get("continue", False) if isinstance(result, dict) else False
+            delay = 5
+            if kind in {"catalog_analyze", "catalog_metadata"} and repeat:
+                completed = result.get("indexed_this_batch", result.get("resolved_this_batch", 0))
+                delay = 0 if completed else 60
             session.execute(
                 update(Job)
                 .where(Job.id == job_id, Job.owner == owner)
                 .values(
-                    status="cancelled" if isinstance(error, Cancelled) else "failed", error=str(error), updated_at=now()
+                    status="queued" if repeat else "completed",
+                    parameters={k: v for k, v in parameters.items() if k not in {"_job_id", "_transient_retries"}},
+                    error=None,
+                    result=result,
+                    progress=1.0,
+                    owner=None,
+                    updated_at=(datetime.now(timezone.utc) + timedelta(seconds=delay)).isoformat() if repeat else now(),
                 )
             )
             session.commit()
-        log.exception(json.dumps({"event": "job_failed", "job_id": job_id}))
+        log.info(json.dumps({"event": "job_completed", "job_id": job_id, "kind": kind}))
+    except SystemExit:
+        with sessions() as session:
+            session.execute(
+                update(Job)
+                .where(Job.id == job_id, Job.owner == owner)
+                .values(status="queued", owner=None, updated_at=now())
+            )
+            session.commit()
+        raise
+    except Exception as error:
+        with sessions() as session:
+            job = session.get(Job, job_id)
+            if not job or job.owner != owner:
+                return
+            cancelled = isinstance(error, Cancelled) or job.cancel_requested
+            retries = int((job.parameters or {}).get("_transient_retries", 0))
+            retry = (
+                not cancelled
+                and isinstance(error, OperationalError)
+                and job.kind.startswith("catalog_")
+                and retries < 3
+            )
+            values = dict(status="cancelled" if cancelled else "failed", error=str(error), updated_at=now())
+            if retry:
+                values.update(
+                    status="queued",
+                    owner=None,
+                    parameters={**job.parameters, "_transient_retries": retries + 1},
+                    updated_at=(datetime.now(timezone.utc) + timedelta(seconds=10 * 2**retries)).isoformat(),
+                )
+            session.execute(update(Job).where(Job.id == job_id, Job.owner == owner).values(**values))
+            session.commit()
+        log.exception(json.dumps({"event": "job_retry" if retry else "job_failed", "job_id": job_id}))
     finally:
         stop.set()
         thread.join(timeout=2)
 
 
 def worker(once=False):
+    if threading.current_thread() is threading.main_thread():
+
+        def shutdown(signum, frame):
+            raise SystemExit(0)
+
+        signal.signal(signal.SIGTERM, shutdown)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     sessions = factory(make_engine())
     owner = str(uuid.uuid4())

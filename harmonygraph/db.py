@@ -186,7 +186,17 @@ class PatternIndex(Base):
     mode = Column(String, nullable=False)
     token = Column(String, nullable=False)
     position = Column(Integer, nullable=False)
-    __table_args__ = (Index("ix_pattern_lookup", "analysis_id", "mode", "token", "song_id", "position"),)
+    __table_args__ = (
+        Index(
+            "ix_pattern_lookup",
+            "analysis_id",
+            "mode",
+            "token",
+            "song_id",
+            "position",
+            postgresql_include=["section_id"],
+        ),
+    )
 
 
 class RetrievalQuery(Base):
@@ -209,6 +219,7 @@ class Annotator(Base):
     __tablename__ = "annotators"
     id = Column(String, primary_key=True, default=uid)
     name = Column(String, nullable=False, unique=True)
+    qualifications = Column(Text, default="")
 
 
 class Benchmark(Base):
@@ -228,6 +239,7 @@ class BenchmarkQuery(Base):
     source_song_id = Column(ForeignKey("songs.id"))
     pool = Column(JSON, default=list)
     synthetic_judgments = Column(JSON, default=dict)
+    protocol = Column(JSON, default=dict)
 
 
 class RelevanceJudgment(Base):
@@ -236,7 +248,7 @@ class RelevanceJudgment(Base):
     query_id = Column(ForeignKey("benchmark_queries.id"), nullable=False, index=True)
     passage_id = Column(String, nullable=False)
     annotator_id = Column(ForeignKey("annotators.id"), nullable=False)
-    relevance = Column(Integer, nullable=False)
+    relevance = Column(Integer, nullable=True)
     ratings = Column(JSON, default=dict)
     notes = Column(Text)
     adjudicated = Column(Boolean, default=False)
@@ -294,6 +306,56 @@ class Job(Base):
     owner = Column(String)
     created_at = Column(String, default=now)
     updated_at = Column(String, default=now)
+
+
+class CatalogRecord(Base):
+    """One unchanged publisher chart; materialization is independent of ingestion."""
+
+    __tablename__ = "catalog_records"
+    id = Column(String, primary_key=True)
+    dataset_id = Column(ForeignKey("datasets.id"), nullable=False, index=True)
+    source_id = Column(String, nullable=False)
+    raw = Column(JSON, nullable=False)
+    track_id = Column(String, index=True)
+    spotify_artist_id = Column(String, index=True)
+    title = Column(String, index=True)
+    artist = Column(String, index=True)
+    artwork = Column(String)
+    genre = Column(String, index=True)
+    year = Column(Integer, index=True)
+    date_precision = Column(String)
+    metadata_status = Column(String, default="pending", nullable=False, index=True)
+    song_id = Column(ForeignKey("songs.id"), unique=True)
+    error = Column(Text)
+    __table_args__ = (UniqueConstraint("dataset_id", "source_id"),)
+
+
+class ProviderMetadata(Base):
+    __tablename__ = "provider_metadata"
+    id = Column(String, primary_key=True)
+    status = Column(String, nullable=False)
+    payload = Column(JSON, default=dict)
+    fetched_at = Column(String, default=now)
+    retry_at = Column(String)
+
+
+class CatalogArtifact(Base):
+    __tablename__ = "catalog_artifacts"
+    record_id = Column(ForeignKey("catalog_records.id"), primary_key=True)
+    configuration_id = Column(ForeignKey("model_configurations.id"), primary_key=True)
+    analysis_id = Column(ForeignKey("analysis_runs.id"), nullable=False, index=True)
+    content_hash = Column(String, nullable=False)
+    sequence = Column(Integer, nullable=False, index=True)
+
+
+class CatalogSnapshot(Base):
+    __tablename__ = "catalog_snapshots"
+    id = Column(String, primary_key=True)
+    analysis_id = Column(ForeignKey("analysis_runs.id"), nullable=False, index=True)
+    sequence = Column(Integer, nullable=False)
+    songs = Column(Integer, nullable=False)
+    created_at = Column(String, default=now)
+    active = Column(Boolean, default=False, index=True)
 
 
 def make_engine(url=None):

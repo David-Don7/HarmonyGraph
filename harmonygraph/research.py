@@ -45,8 +45,11 @@ VARIANTS = {
 }
 
 
-def grouped_splits(session, seed=42):
-    songs = list(session.scalars(select(Song).order_by(Song.id)))
+def grouped_splits(session, seed=42, song_ids=None):
+    statement = select(Song).order_by(Song.id)
+    if song_ids is not None:
+        statement = statement.where(Song.id.in_(song_ids))
+    songs = list(session.scalars(statement))
     parents = {song.id: song.id for song in songs}
 
     def find(x):
@@ -85,7 +88,11 @@ def grouped_splits(session, seed=42):
         group = fingerprint(sorted(lookup[sid].source_id for sid in ids))
         assignments.extend({"song_id": sid, "group_id": group, "split": split} for sid in ids)
     manifest = fingerprint(
-        {"corpus": corpus_hash(session), "seed": seed, "assignments": sorted(assignments, key=lambda r: r["song_id"])}
+        {
+            "corpus": corpus_hash(session, song_ids),
+            "seed": seed,
+            "assignments": sorted(assignments, key=lambda r: r["song_id"]),
+        }
     )
     if not session.scalar(select(SplitAssignment).where(SplitAssignment.manifest == manifest).limit(1)):
         session.add_all([SplitAssignment(manifest=manifest, **row) for row in assignments])
@@ -109,7 +116,14 @@ def benchmark_hash(session, benchmark_id):
     return fingerprint(
         {
             "queries": [
-                {"id": q.id, "request": q.request, "judgments": q.synthetic_judgments, "pool": q.pool} for q in queries
+                {
+                    "id": q.id,
+                    "request": q.request,
+                    "judgments": q.synthetic_judgments,
+                    "pool": q.pool,
+                    "protocol": q.protocol,
+                }
+                for q in queries
             ],
             "judgments": [
                 {
@@ -143,11 +157,12 @@ def judgments_for(session, query):
             latest[row.passage_id, row.annotator_id] = row.relevance
     passages = {p for p, _ in latest}
     for passage in passages:
-        grades = [g for (p, _), g in latest.items() if p == passage]
+        grades = [g for (p, _), g in latest.items() if p == passage and g is not None]
         # A median preserves a disagreement without silently selecting an annotator.
-        values[passage] = float(statistics.median(grades))
+        if grades:
+            values[passage] = float(statistics.median(grades))
     values.update(adjudicated)
-    return values
+    return {p: g for p, g in values.items() if g is not None}
 
 
 def absolute_query(session, query, request):
@@ -167,25 +182,51 @@ def absolute_query(session, query, request):
     return " ".join(labels)
 
 
-def frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest):
-    return {
-        "corpus_hash": corpus_hash(session),
+def snapshot_scope(session, snapshot_id):
+    if not snapshot_id:
+        return None
+    from .db import CatalogSnapshot, CatalogArtifact, CatalogRecord
+
+    snapshot = session.get(CatalogSnapshot, snapshot_id)
+    if not snapshot:
+        raise ValueError("Catalog snapshot not found")
+    return list(
+        session.scalars(
+            select(CatalogRecord.song_id)
+            .join(CatalogArtifact, CatalogArtifact.record_id == CatalogRecord.id)
+            .where(CatalogArtifact.analysis_id == snapshot.analysis_id, CatalogArtifact.sequence <= snapshot.sequence)
+        )
+    )
+
+
+def frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest, snapshot_id=None):
+    manifest = {
+        "corpus_hash": corpus_hash(session, snapshot_scope(session, snapshot_id)),
         "benchmark_hash": benchmark_hash(session, benchmark_id),
         "split_hash": split_manifest,
         "configuration_hash": config_id,
         "analysis_id": analysis_id,
     }
+    if snapshot_id:
+        manifest["catalog_snapshot"] = snapshot_id
+    return manifest
 
 
-def freeze(session, benchmark_id, config_id=None):
-    run = active_run(session)
+def freeze(session, benchmark_id, config_id=None, catalog_snapshot=None):
+    from .db import CatalogSnapshot
+
+    snapshot = session.get(CatalogSnapshot, catalog_snapshot) if catalog_snapshot else None
+    if catalog_snapshot and not snapshot:
+        raise ValueError("Catalog snapshot not found")
+    run = active_run(session, snapshot.analysis_id if snapshot else None)
     config_id = config_id or run.configuration_id
     config = session.get(ModelConfiguration, config_id)
     if not config:
         raise ValueError("Configuration not found")
-    analysis_id = analyze(session, AnalysisConfig(**config.parameters), activate=False)
-    split_manifest, _ = grouped_splits(session, config.parameters.get("seed", 42))
-    manifest = frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest)
+    scope = snapshot_scope(session, catalog_snapshot)
+    analysis_id = analyze(session, AnalysisConfig(**config.parameters), activate=False, song_ids=scope)
+    split_manifest, _ = grouped_splits(session, config.parameters.get("seed", 42), scope)
+    manifest = frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest, catalog_snapshot)
     if config.frozen and config.freeze_manifest != manifest:
         raise ValueError("This configuration is frozen against different data; create a new configuration version")
     config.frozen = True
@@ -205,6 +246,7 @@ def evaluate(
     progress=lambda p: None,
     domain=None,
     query_hook=None,
+    catalog_snapshot=None,
 ):
     if split not in {"train", "validation", "test"}:
         raise ValueError("Choose train, validation, or test")
@@ -224,7 +266,8 @@ def evaluate(
     ]
     if any(v not in VARIANTS for v in variants):
         raise ValueError("Unknown experiment variant")
-    split_manifest, assignments = grouped_splits(session, config.seed)
+    scope = snapshot_scope(session, catalog_snapshot)
+    split_manifest, assignments = grouped_splits(session, config.seed, scope)
     song_ids = {row["song_id"] for row in assignments if row["split"] == split}
     queries = list(
         session.scalars(
@@ -243,8 +286,8 @@ def evaluate(
         queries = queries[:max_queries]
     if not queries:
         raise ValueError("No benchmark queries in this grouped split/domain; assign source songs before evaluating")
-    analysis_id = analyze(session, config, activate=False)
-    manifest = frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest)
+    analysis_id = analyze(session, config, activate=False, song_ids=scope)
+    manifest = frozen_manifest(session, benchmark_id, config_id, analysis_id, split_manifest, catalog_snapshot)
     previous = list(
         session.scalars(
             select(ExperimentRun).where(
@@ -266,20 +309,21 @@ def evaluate(
     for variant_index, variant in enumerate(variants):
         base = AnalysisConfig() if variant == "B6_manual" else config
         cfg = base.model_copy(update=VARIANTS[variant])
-        variant_analysis = analyze(session, cfg, activate=False)
+        variant_analysis = analyze(session, cfg, activate=False, song_ids=scope)
         per_query, latencies = [], []
         for index, query in enumerate(queries):
             request = SearchRequest(**query.request)
             request.analysis_id, request.song_ids, request.limit = variant_analysis, sorted(song_ids), 100
+            request.catalog_snapshot = catalog_snapshot
             if variant in {"B1_absolute", "B2_intervals"} and request.pattern == "progression":
                 request.progression = absolute_query(session, query, request)
                 request.mode = "literal" if variant == "B1_absolute" else "transposed"
             if variant == "B5_uniform_edit":
                 request.mode = "fuzzy"
             if not cfg.sections:
-                request.section, request.preferred_section, request.every_chorus = None, None, False
+                request.preferred_section = None
             if not cfg.boundaries:
-                request.boundary, request.preferred_boundary = None, None
+                request.preferred_boundary = None
             response = search(session, request, override=cfg)
             labels = {
                 pid: grade for pid, grade in judgments_for(session, query).items() if pid.rsplit(":", 2)[0] in song_ids
@@ -486,7 +530,8 @@ def agreement_report(session, benchmark_id):
     matrix, ratings = {}, {"correctness": [], "clarity": [], "usefulness": []}
     latest_rows = {(row.query_id, row.passage_id, row.annotator_id): row for row in rows}
     for row in latest_rows.values():
-        matrix.setdefault(f"{row.query_id}:{row.passage_id}", {})[row.annotator_id] = row.relevance
+        if row.relevance is not None:
+            matrix.setdefault(f"{row.query_id}:{row.passage_id}", {})[row.annotator_id] = row.relevance
         for kind, values in ratings.items():
             if row.ratings.get(kind) is not None:
                 values.append(row.ratings[kind])

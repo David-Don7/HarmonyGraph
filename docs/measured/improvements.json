@@ -1,0 +1,113 @@
+{
+  "checked_at": "2026-09-19T01:31:06.858102+00:00",
+  "snapshot_id": "8205d63bdfb461bd7ea07ac54c0eb803c910324f03b0bd53482a4bbcfd4e021a",
+  "live_coverage": {
+    "imported_records": 679807,
+    "resolved_records": 6298,
+    "identified_tracks": 430323,
+    "named_songs": 5391,
+    "searchable_songs": 3499,
+    "unresolved_records": 673509,
+    "unavailable_records": 239523,
+    "snapshot_id": "d52cf450aaa5238abe2d7f23704448085128458c35b53f2756aa63651e902b16",
+    "import_complete": true,
+    "genres": [
+      "alternative",
+      "country",
+      "electronic",
+      "jazz",
+      "metal",
+      "pop",
+      "pop rock",
+      "punk",
+      "rap",
+      "reggae",
+      "rock",
+      "soul"
+    ],
+    "source": "https://huggingface.co/datasets/ailsntua/Chordonomicon",
+    "license": "CC-BY-NC-4.0"
+  },
+  "searches": {
+    "literal": {
+      "progression": "D A G",
+      "first_request_ms": 786.0882999993919,
+      "warm_samples_ms": [
+        72.7911000012682,
+        57.41119999947841,
+        81.0643999993772,
+        48.27639999894018,
+        91.84230000028037
+      ],
+      "warm_p95_ms": 89.68672000009974,
+      "baseline_warm_p95_ms": 688.9151799995489,
+      "last_stages_ms": {
+        "total_ms": 84.44752899958985,
+        "candidate_ms": 13.435025000035239,
+        "rerank_ms": 62.0214450000276
+      },
+      "candidate_count": 345,
+      "candidate_limit_reached": false
+    },
+    "transposed": {
+      "progression": "D A G",
+      "first_request_ms": 954.2123000010179,
+      "warm_samples_ms": [
+        140.76209999984712,
+        108.36590000144497,
+        176.87390000173764,
+        130.11630000073637,
+        131.33689999995113
+      ],
+      "warm_p95_ms": 169.65154000135954,
+      "baseline_warm_p95_ms": 602.0869049998962,
+      "last_stages_ms": {
+        "total_ms": 121.1041220003608,
+        "candidate_ms": 73.84402400020917,
+        "rerank_ms": 33.23056600038399
+      },
+      "candidate_count": 500,
+      "candidate_limit_reached": true
+    },
+    "functional": {
+      "progression": "D A G",
+      "first_request_ms": 3051.161699999284,
+      "warm_samples_ms": [
+        1507.2756000008667,
+        1790.4226999999082,
+        1811.9793000005302,
+        2036.4530999995623,
+        1942.6804999984597
+      ],
+      "warm_p95_ms": 2017.6985799993417,
+      "baseline_warm_p95_ms": 4165.0306099997115,
+      "last_stages_ms": {
+        "total_ms": 1931.2365019995923,
+        "candidate_ms": 1829.1387040007976,
+        "rerank_ms": 66.64853999973275
+      },
+      "candidate_count": 1500,
+      "candidate_limit_reached": true
+    },
+    "fuzzy": {
+      "progression": "D A G",
+      "first_request_ms": 5116.332200001125,
+      "warm_samples_ms": [
+        4475.170899999284,
+        4333.337699999902,
+        4254.955099999279,
+        4600.841200001014,
+        4947.930599999381
+      ],
+      "warm_p95_ms": 4878.512719999708,
+      "baseline_warm_p95_ms": 5270.745239999633,
+      "last_stages_ms": {
+        "total_ms": 4923.3864040006665,
+        "candidate_ms": 3581.225478000306,
+        "rerank_ms": 1225.1943090004715
+      },
+      "candidate_count": 1500,
+      "candidate_limit_reached": true
+    }
+  }
+}

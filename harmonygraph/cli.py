@@ -81,7 +81,8 @@ def search_command(progression, mode, section, boundary):
 @click.option("--rerun", is_flag=True)
 @click.option("--config", type=click.Path(exists=True))
 @click.option("--domain", help="JSON object with genre/year/dataset filters")
-def evaluate_command(benchmark_id, split, max_queries, ablations, rerun, config, domain):
+@click.option("--catalog-snapshot")
+def evaluate_command(benchmark_id, split, max_queries, ablations, rerun, config, domain, catalog_snapshot):
     from .research import VARIANTS, evaluate
 
     cfg = AnalysisConfig(**json.loads(Path(config).read_text())) if config else AnalysisConfig()
@@ -96,6 +97,7 @@ def evaluate_command(benchmark_id, split, max_queries, ablations, rerun, config,
                 cfg,
                 rerun,
                 domain=json.loads(domain) if domain else None,
+                catalog_snapshot=catalog_snapshot,
             )
         )
 
@@ -120,11 +122,39 @@ def optimize_command(benchmark_id, trials, research, sampler, latency_limit_ms):
 @main.command("freeze")
 @click.argument("benchmark_id")
 @click.option("--configuration-id")
-def freeze_command(benchmark_id, configuration_id):
+@click.option("--catalog-snapshot")
+def freeze_command(benchmark_id, configuration_id, catalog_snapshot):
     from .research import freeze
 
     with factory(make_engine())() as session:
-        output(freeze(session, benchmark_id, configuration_id))
+        output(freeze(session, benchmark_id, configuration_id, catalog_snapshot))
+
+
+@main.command("catalog")
+@click.argument("action", type=click.Choice(["start", "status", "metadata", "index"]))
+def catalog_command(action):
+    """Start/resume the real catalog pipeline or show publication coverage."""
+    from .catalog import enqueue
+    from .db import CatalogSnapshot, record
+    from sqlalchemy import select
+
+    with factory(make_engine())() as session:
+        if action == "status":
+            from .db import CatalogRecord
+            from sqlalchemy import func
+
+            snapshot = session.scalar(select(CatalogSnapshot).where(CatalogSnapshot.active.is_(True)))
+            output(
+                {
+                    "imported_records": session.scalar(select(func.count()).select_from(CatalogRecord)),
+                    "snapshot": record(snapshot) if snapshot else None,
+                }
+            )
+        else:
+            kind = {"start": "catalog_download", "metadata": "catalog_metadata", "index": "catalog_analyze"}[action]
+            job = enqueue(session, kind)
+            session.commit()
+            output(record(job))
 
 
 @main.command("export")
@@ -176,6 +206,39 @@ def performance_command(repeats, output_path):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     output(result)
+
+
+@main.command("research-v2-audit")
+@click.option("--song-id", multiple=True, required=True)
+@click.option("--analysis-id")
+@click.option("--examples", default=8, type=click.IntRange(6, 10))
+@click.option("--directory", default="artifacts/research-v2")
+def research_v2_audit(song_id, analysis_id, examples, directory):
+    """Audit up to 20 analyzed songs and export a blinded review packet."""
+    from .research_v2 import bounded_audit, export_packet
+    with factory(make_engine())() as session:
+        audit, packet = bounded_audit(session, list(song_id), analysis_id=analysis_id, example_count=examples)
+    output({"directory": export_packet(directory, audit, packet), "coverage": audit["coverage"], "candidate_audit": audit["candidate_audit"]})
+
+
+@main.command("research-v2-compare")
+@click.argument("benchmark_id")
+@click.option("--song-id", multiple=True, required=True)
+@click.option("--analysis-id")
+@click.option("--path-budget", default=32, type=click.IntRange(1, 256))
+@click.option("--annotator-id")
+@click.option("--directory", default="artifacts/research-v2")
+def research_v2_compare(benchmark_id, song_id, analysis_id, path_budget, annotator_id, directory):
+    """Controlled development comparison; held-out test queries are rejected."""
+    from .research_v2 import controlled_run
+    with factory(make_engine())() as session:
+        report = controlled_run(session, benchmark_id, list(song_id), analysis_id=analysis_id, path_budget=path_budget, annotator=annotator_id)
+    path = Path(directory) / (report["manifest_hash"] + ".json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        raise click.ClickException("This frozen manifest already has a report; use a new directory for an explicit rerun")
+    path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    output({"report": str(path.resolve()), "manifest_hash": report["manifest_hash"]})
 
 
 if __name__ == "__main__":

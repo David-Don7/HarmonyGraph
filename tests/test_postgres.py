@@ -52,7 +52,10 @@ def test_postgres_migrations_indexes_and_skip_locked(postgres):
         first.rollback()
         assert claim_job(first, "first") == a.id
         assert any(i["name"] == "ix_pattern_lookup" for i in inspect(postgres).get_indexes("pattern_indexes"))
-        assert first.scalar(text("SELECT version_num FROM harmonygraph_schema_version")) == "0001"
+        assert first.scalar(text("SELECT version_num FROM harmonygraph_schema_version")) == "0004"
+        lookup = next(i for i in inspect(postgres).get_indexes("pattern_indexes") if i["name"] == "ix_pattern_lookup")
+        assert lookup["include_columns"] == ["section_id"]
+        assert "catalog_snapshots" in inspect(postgres).get_table_names()
 
 
 def test_postgres_ingestion_filtering_versions_and_recovery(postgres, tmp_path):
@@ -84,3 +87,35 @@ def test_postgres_ingestion_filtering_versions_and_recovery(postgres, tmp_path):
         session.add(job)
         session.commit()
         assert claim_job(session, "replacement-worker") == job.id
+
+
+def test_postgres_real_catalog_publication_and_collections(postgres, tmp_path):
+    from fastapi.testclient import TestClient
+    from harmonygraph.api import create_app
+    from harmonygraph.catalog import import_catalog, analyze_batch
+    from harmonygraph.db import CatalogRecord
+
+    path = tmp_path / "catalog.csv"
+    path.write_text(
+        "id,chords,release_date,main_genre,spotify_song_id,spotify_artist_id\n"
+        "1,<chorus_1> C G Am F G7 C,2003-01-01,rock,2ffJZ2r8HxI5DHcmf3BO6c,694QW15WkebjcrWgQHzRYF\n"
+    )
+    with factory(postgres)() as session:
+        assert import_catalog(session, path, {}, lambda _: None)["imported"] == 1
+        row = session.scalar(select(CatalogRecord))
+        row.title, row.artist, row.metadata_status = "Integration fixture", "Test artist", "resolved"
+        session.commit()
+        analyze_batch(session, {}, lambda _: None)
+        analyze_batch(session, {}, lambda _: None)
+    client = TestClient(create_app(postgres))
+    assert client.get("/api/v1/catalog/collections").status_code == 200
+    coverage = client.get("/api/v1/catalog/coverage").json()
+    assert coverage["imported_records"] == coverage["searchable_songs"] == 1
+    response = client.post("/api/v1/catalog/search", json={"progression": "D A Bm G", "mode": "transposed"})
+    assert response.status_code == 200 and response.json()["results"]
+    for mode in ("functional", "fuzzy"):
+        body = {"progression": "C G Am F", "mode": mode, "section": "chorus", "genre": "rock"}
+        response = client.post("/api/v1/catalog/search", json=body)
+        assert response.status_code == 200 and response.json()["results"]
+        response = client.post("/api/v1/catalog/search", json={**body, "genre": "absent"})
+        assert response.status_code == 200 and response.json()["results"] == []

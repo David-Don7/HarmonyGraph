@@ -6,6 +6,256 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/catalog/coverage": {
+      "get": {
+        "tags": [
+          "Music discovery"
+        ],
+        "summary": "Coverage",
+        "operationId": "coverage_api_v1_catalog_coverage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/songs": {
+      "get": {
+        "tags": [
+          "Music discovery"
+        ],
+        "summary": "Songs",
+        "operationId": "songs_api_v1_catalog_songs_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Genre"
+            }
+          },
+          {
+            "name": "decade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decade"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 24,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "ready",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Ready"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/collections": {
+      "get": {
+        "tags": [
+          "Music discovery"
+        ],
+        "summary": "Collections",
+        "operationId": "collections_api_v1_catalog_collections_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/songs/{identifier}": {
+      "get": {
+        "tags": [
+          "Music discovery"
+        ],
+        "summary": "Detail",
+        "operationId": "detail_api_v1_catalog_songs__identifier__get",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/search": {
+      "post": {
+        "tags": [
+          "Music discovery"
+        ],
+        "summary": "Find",
+        "operationId": "find_api_v1_catalog_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsumerSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health": {
       "get": {
         "summary": "Health",
@@ -558,6 +808,59 @@
         }
       }
     },
+    "/api/v1/research-v2/status": {
+      "get": {
+        "summary": "Research V2 Status",
+        "operationId": "research_v2_status_api_v1_research_v2_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmark-queries/{query_id}/blind-pool": {
+      "get": {
+        "summary": "Blind Pool",
+        "operationId": "blind_pool_api_v1_benchmark_queries__query_id__blind_pool_get",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/annotators": {
       "get": {
         "summary": "Annotators",
@@ -580,7 +883,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NameInput"
+                "$ref": "#/components/schemas/AnnotatorInput"
               }
             }
           },
@@ -1211,6 +1514,26 @@
         "type": "object",
         "title": "AnalysisConfig"
       },
+      "AnnotatorInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "qualifications": {
+            "type": "string",
+            "title": "Qualifications",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AnnotatorInput"
+      },
       "BenchmarkInput": {
         "properties": {
           "name": {
@@ -1231,100 +1554,13 @@
         ],
         "title": "BenchmarkInput"
       },
-      "FreezeInput": {
-        "properties": {
-          "benchmark_id": {
-            "type": "string",
-            "title": "Benchmark Id"
-          },
-          "configuration_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Configuration Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "benchmark_id"
-        ],
-        "title": "FreezeInput"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "JobInput": {
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "demo",
-              "import",
-              "analyze",
-              "evaluate",
-              "optimize",
-              "export"
-            ],
-            "title": "Kind"
-          },
-          "parameters": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Parameters",
-            "default": {}
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "kind"
-        ],
-        "title": "JobInput"
-      },
-      "JobResponse": {
+      "CatalogDetail": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "kind": {
-            "type": "string",
-            "title": "Kind"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "progress": {
-            "type": "number",
-            "title": "Progress"
-          },
-          "parameters": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Parameters"
-          },
-          "result": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Result"
-          },
-          "error": {
+          "song_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -1333,136 +1569,194 @@
                 "type": "null"
               }
             ],
-            "title": "Error"
+            "title": "Song Id"
           },
-          "created_at": {
+          "track_id": {
             "type": "string",
-            "title": "Created At"
+            "title": "Track Id"
           },
-          "updated_at": {
+          "title": {
             "type": "string",
-            "title": "Updated At"
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "artwork": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artwork"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "date_precision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Precision"
+          },
+          "spotify_url": {
+            "type": "string",
+            "title": "Spotify Url"
+          },
+          "metadata_status": {
+            "type": "string",
+            "title": "Metadata Status"
+          },
+          "searchable": {
+            "type": "boolean",
+            "title": "Searchable",
+            "default": false
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "variants": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Variants"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "license": {
+            "type": "string",
+            "title": "License"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "metadata_source": {
+            "type": "string",
+            "title": "Metadata Source"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "kind",
-          "status",
-          "progress",
-          "parameters",
-          "result",
-          "error",
-          "created_at",
-          "updated_at"
+          "song_id",
+          "track_id",
+          "title",
+          "artist",
+          "artwork",
+          "genre",
+          "year",
+          "date_precision",
+          "spotify_url",
+          "metadata_status",
+          "sections",
+          "variants",
+          "source_id",
+          "source",
+          "license",
+          "snapshot_id",
+          "metadata_source"
         ],
-        "title": "JobResponse"
+        "title": "CatalogDetail"
       },
-      "JudgmentInput": {
+      "CatalogMatch": {
         "properties": {
-          "query_id": {
-            "type": "string",
-            "title": "Query Id"
+          "song": {
+            "$ref": "#/components/schemas/CatalogSong"
           },
-          "passage_id": {
-            "type": "string",
-            "title": "Passage Id"
+          "match": {
+            "$ref": "#/components/schemas/SearchResult"
           },
-          "annotator_id": {
-            "type": "string",
-            "title": "Annotator Id"
+          "score": {
+            "type": "number",
+            "title": "Score"
           },
-          "relevance": {
-            "type": "integer",
-            "maximum": 2.0,
-            "minimum": 0.0,
-            "title": "Relevance"
+          "query_contributions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Query Contributions"
           },
-          "correctness": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Correctness"
-          },
-          "clarity": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clarity"
-          },
-          "usefulness": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Usefulness"
-          },
-          "notes": {
-            "type": "string",
-            "title": "Notes",
-            "default": ""
-          },
-          "adjudicated": {
-            "type": "boolean",
-            "title": "Adjudicated",
-            "default": false
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "query_id",
-          "passage_id",
-          "annotator_id",
-          "relevance"
-        ],
-        "title": "JudgmentInput"
-      },
-      "NameInput": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 1,
-            "title": "Name"
+          "variants": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Variants"
           }
         },
         "type": "object",
         "required": [
-          "name"
+          "song",
+          "match",
+          "score",
+          "query_contributions",
+          "variants"
         ],
-        "title": "NameInput"
+        "title": "CatalogMatch"
       },
-      "QueryInput": {
+      "CatalogPage": {
         "properties": {
-          "category": {
-            "type": "string",
-            "title": "Category"
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogSong"
+            },
+            "type": "array",
+            "title": "Items"
           },
-          "request": {
-            "$ref": "#/components/schemas/SearchRequest"
-          },
-          "source_song_id": {
+          "next_cursor": {
             "anyOf": [
               {
                 "type": "string"
@@ -1471,17 +1765,214 @@
                 "type": "null"
               }
             ],
-            "title": "Source Song Id"
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
-          "category",
-          "request"
+          "items",
+          "next_cursor"
         ],
-        "title": "QueryInput"
+        "title": "CatalogPage"
       },
-      "SearchRequest": {
+      "CatalogSearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogMatch"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "candidate_limit_reached": {
+            "type": "boolean",
+            "title": "Candidate Limit Reached"
+          },
+          "candidate_count": {
+            "type": "integer",
+            "title": "Candidate Count"
+          },
+          "query_interpretations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Query Interpretations"
+          },
+          "timings": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Timings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "snapshot_id",
+          "candidate_limit_reached",
+          "candidate_count",
+          "query_interpretations",
+          "timings"
+        ],
+        "title": "CatalogSearchResponse"
+      },
+      "CatalogSection": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "title": "End"
+          },
+          "practice": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeChord"
+            },
+            "type": "array",
+            "title": "Practice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "events",
+          "start",
+          "end",
+          "practice"
+        ],
+        "title": "CatalogSection"
+      },
+      "CatalogSong": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "song_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Song Id"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "artwork": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artwork"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "date_precision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Precision"
+          },
+          "spotify_url": {
+            "type": "string",
+            "title": "Spotify Url"
+          },
+          "metadata_status": {
+            "type": "string",
+            "title": "Metadata Status"
+          },
+          "searchable": {
+            "type": "boolean",
+            "title": "Searchable",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "song_id",
+          "track_id",
+          "title",
+          "artist",
+          "artwork",
+          "genre",
+          "year",
+          "date_precision",
+          "spotify_url",
+          "metadata_status"
+        ],
+        "title": "CatalogSong"
+      },
+      "ConsumerSearchRequest": {
         "properties": {
           "progression": {
             "type": "string",
@@ -1497,7 +1988,41 @@
               "fuzzy"
             ],
             "title": "Mode",
-            "default": "functional"
+            "default": "transposed"
+          },
+          "ranking": {
+            "type": "string",
+            "enum": [
+              "legacy_mixture",
+              "path_expectation",
+              "hard_path",
+              "max_path",
+              "equal_paths",
+              "shuffled_paths"
+            ],
+            "title": "Ranking",
+            "default": "legacy_mixture"
+          },
+          "path_budget": {
+            "type": "integer",
+            "maximum": 4096.0,
+            "minimum": 1.0,
+            "title": "Path Budget",
+            "default": 64
+          },
+          "function_budget": {
+            "type": "integer",
+            "maximum": 256.0,
+            "minimum": 1.0,
+            "title": "Function Budget",
+            "default": 16
+          },
+          "match_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Match Threshold",
+            "default": 0.8
           },
           "pattern": {
             "type": "string",
@@ -1679,6 +2204,605 @@
             "type": "array",
             "title": "Song Ids",
             "default": []
+          },
+          "catalog_snapshot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Snapshot"
+          },
+          "notation": {
+            "type": "string",
+            "enum": [
+              "chords",
+              "roman"
+            ],
+            "title": "Notation",
+            "default": "chords"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ConsumerSearchRequest"
+      },
+      "FreezeInput": {
+        "properties": {
+          "benchmark_id": {
+            "type": "string",
+            "title": "Benchmark Id"
+          },
+          "configuration_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Id"
+          },
+          "catalog_snapshot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Snapshot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmark_id"
+        ],
+        "title": "FreezeInput"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobInput": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "import",
+              "analyze",
+              "evaluate",
+              "optimize",
+              "export",
+              "catalog_download",
+              "catalog_import",
+              "catalog_metadata",
+              "catalog_analyze"
+            ],
+            "title": "Kind"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "JobInput"
+      },
+      "JobResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "progress",
+          "parameters",
+          "result",
+          "error",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "JobResponse"
+      },
+      "JudgmentInput": {
+        "properties": {
+          "query_id": {
+            "type": "string",
+            "title": "Query Id"
+          },
+          "passage_id": {
+            "type": "string",
+            "title": "Passage Id"
+          },
+          "annotator_id": {
+            "type": "string",
+            "title": "Annotator Id"
+          },
+          "relevance": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relevance"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "judged",
+              "insufficient_context",
+              "unsupported",
+              "unresolved"
+            ],
+            "title": "Status",
+            "default": "judged"
+          },
+          "supported_interpretations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Interpretations",
+            "default": []
+          },
+          "section_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Correct"
+          },
+          "evidence_basis": {
+            "type": "string",
+            "enum": [
+              "chord-only",
+              "audio-assisted"
+            ],
+            "title": "Evidence Basis",
+            "default": "chord-only"
+          },
+          "adjudication_sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Adjudication Sources",
+            "default": []
+          },
+          "correctness": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctness"
+          },
+          "clarity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarity"
+          },
+          "usefulness": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usefulness"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          },
+          "adjudicated": {
+            "type": "boolean",
+            "title": "Adjudicated",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "query_id",
+          "passage_id",
+          "annotator_id"
+        ],
+        "title": "JudgmentInput"
+      },
+      "PracticeChord": {
+        "properties": {
+          "notes": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Notes"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notes",
+          "status"
+        ],
+        "title": "PracticeChord"
+      },
+      "QueryInput": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "request": {
+            "$ref": "#/components/schemas/SearchRequest"
+          },
+          "source_song_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Song Id"
+          },
+          "protocol": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Protocol",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "request"
+        ],
+        "title": "QueryInput"
+      },
+      "SearchRequest": {
+        "properties": {
+          "progression": {
+            "type": "string",
+            "title": "Progression",
+            "default": ""
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "literal",
+              "transposed",
+              "functional",
+              "fuzzy"
+            ],
+            "title": "Mode",
+            "default": "functional"
+          },
+          "ranking": {
+            "type": "string",
+            "enum": [
+              "legacy_mixture",
+              "path_expectation",
+              "hard_path",
+              "max_path",
+              "equal_paths",
+              "shuffled_paths"
+            ],
+            "title": "Ranking",
+            "default": "legacy_mixture"
+          },
+          "path_budget": {
+            "type": "integer",
+            "maximum": 4096.0,
+            "minimum": 1.0,
+            "title": "Path Budget",
+            "default": 64
+          },
+          "function_budget": {
+            "type": "integer",
+            "maximum": 256.0,
+            "minimum": 1.0,
+            "title": "Function Budget",
+            "default": 16
+          },
+          "match_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Match Threshold",
+            "default": 0.8
+          },
+          "pattern": {
+            "type": "string",
+            "enum": [
+              "progression",
+              "relative_minor_modulation"
+            ],
+            "title": "Pattern",
+            "default": "progression"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "preferred_section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Section"
+          },
+          "boundary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "start",
+                  "end",
+                  "interior",
+                  "adjacent"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary"
+          },
+          "preferred_boundary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "start",
+                  "end"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Boundary"
+          },
+          "boundary_distance": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 0.0,
+            "title": "Boundary Distance",
+            "default": 0
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "year_from": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year From"
+          },
+          "year_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year To"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          },
+          "cross_sections": {
+            "type": "boolean",
+            "title": "Cross Sections",
+            "default": false
+          },
+          "every_chorus": {
+            "type": "boolean",
+            "title": "Every Chorus",
+            "default": false
+          },
+          "required_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Features",
+            "default": []
+          },
+          "optional_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Optional Features",
+            "default": []
+          },
+          "tolerance": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Tolerance",
+            "default": 0.45
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 20
+          },
+          "analysis_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
+          "dataset_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dataset Ids",
+            "default": []
+          },
+          "song_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Song Ids",
+            "default": []
+          },
+          "catalog_snapshot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Snapshot"
           }
         },
         "additionalProperties": false,

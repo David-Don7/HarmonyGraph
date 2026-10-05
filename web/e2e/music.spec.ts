@@ -1,0 +1,97 @@
+import { test, expect } from '@playwright/test';
+
+test('local chord practice works without Spotify and stops for navigation', async ({page,request}) => {
+  const catalog=await(await request.get('/api/v1/catalog/songs?limit=1')).json();
+  const song=catalog.items[0];
+  const errors:string[]=[]; page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**://open.spotify.com/**',route=>route.abort());
+  await page.goto('/song/'+song.id);
+  const practice=page.getByRole('region',{name:'Chord practice',exact:true});
+  await expect(practice).toBeVisible();
+  await expect(practice).toContainText('not the original recording or its timing');
+  await practice.getByRole('button',{name:'Play chords',exact:true}).click();
+  await expect(practice.getByRole('button',{name:'Pause practice',exact:true})).toBeVisible();
+  await expect(practice.getByRole('status')).toContainText('Chord 2', {timeout:8000});
+  await practice.getByRole('button',{name:'Pause practice',exact:true}).click();
+  await practice.getByRole('button',{name:'Next practice chord',exact:true}).click();
+  await expect(practice.getByRole('button',{name:'Play chords',exact:true})).toBeVisible();
+  await practice.getByLabel('Loop section').check();
+  await practice.getByRole('button',{name:'Play chords',exact:true}).click();
+  await page.getByRole('button',{name:'Listen on Spotify',exact:true}).click();
+  await expect(practice.getByRole('button',{name:'Play chords',exact:true})).toBeVisible();
+  await practice.getByRole('button',{name:'Play chords',exact:true}).click();
+  await expect(page.locator('.spotify-player')).toHaveCount(0);
+  await page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link',{name:'Discover',exact:true}).click();
+  await expect(practice).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('real catalog discovery, saved music, Spotify fallback and browser history', async ({page, request}) => {
+  const errors: string[]=[]; page.on('pageerror',e=>errors.push(e.message));
+  const catalog=await (await request.get('/api/v1/catalog/songs?limit=1')).json();
+  expect(catalog.items.length).toBeGreaterThan(0);
+  const song=catalog.items[0];
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:/Know the chords/})).toBeVisible();
+  await expect(page.locator('.music-card').first()).toBeVisible();
+  await expect(page.getByText('Synthetic Ensemble',{exact:false})).toHaveCount(0);
+  await page.getByRole('textbox',{name:'Find a song or artist'}).fill(song.title);
+  await page.getByRole('textbox',{name:'Find a song or artist'}).press('Enter');
+  await expect(page).toHaveURL(/\/search\?q=/);
+  await page.getByRole('link',{name:`Explore ${song.title}`,exact:true}).first().click();
+  await expect(page.getByRole('heading',{name:song.title,exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Inside the song'})).toBeVisible();
+  await page.getByRole('button',{name:'Save song',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Saved',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'Listen on Spotify',exact:true}).click();
+  await expect(page.locator('.spotify-player iframe')).toHaveAttribute('src',`https://open.spotify.com/embed/track/${song.track_id}`);
+  await expect(page.locator('.spotify-player').getByRole('link',{name:'Open in Spotify'})).toHaveAttribute('href',song.spotify_url);
+  await page.getByRole('button',{name:'Close player'}).click();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/search\?q=/);
+  await page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link',{name:'Saved',exact:true}).click();
+  await expect(page.getByRole('heading',{name:song.title,exact:true})).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading',{name:song.title,exact:true})).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('chord search, explanation, filters and mobile navigation',async({page,request})=>{
+  const catalog=await(await request.get('/api/v1/catalog/songs?ready=true&limit=1')).json();
+  expect(catalog.items.length).toBeGreaterThan(0);
+  const detail=await(await request.get('/api/v1/catalog/songs/'+catalog.items[0].id)).json();
+  const chords=detail.sections.find((s:any)=>s.events.length>=3).events.slice(0,3).join(' ');
+  await page.goto('/');
+  await page.getByRole('textbox',{name:'Chord progression',exact:true}).fill(chords);
+  await page.getByRole('radio',{name:'Exact chords',exact:true}).check();
+  await page.getByRole('button',{name:'Find songs',exact:true}).click();
+  await expect(page.locator('.music-result').first()).toBeVisible();
+  await page.locator('.music-result').first().getByText('Why this matched',{exact:true}).click();
+  await expect(page.locator('.music-result').first().getByText(/Overall match:/)).toBeVisible();
+  await page.getByRole('button',{name:'Save search',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Search saved',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Advanced',exact:true}).click();
+  await expect(page.getByLabel('Section position')).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.getByRole('navigation',{name:'Mobile navigation',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+  await page.getByRole('navigation',{name:'Mobile navigation',exact:true}).getByRole('link',{name:'Discover',exact:true}).click();
+  await expect(page.getByRole('heading',{name:/Know the chords/})).toBeVisible();
+  await page.screenshot({path:'../artifacts/music-mobile.png',fullPage:true});
+});
+
+test('empty, failure and unavailable artwork states',async({page})=>{
+  await page.route('**/api/v1/catalog/collections',route=>route.fulfill({json:[]}));
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'The real-song collection is on its way.'})).toBeVisible();
+  await page.route('**/api/v1/catalog/songs?*',route=>route.fulfill({status:503,json:{detail:'Catalog temporarily unavailable'}}));
+  await page.goto('/search?q=unavailable');
+  await expect(page.getByRole('alert')).toContainText('Catalog temporarily unavailable');
+  await expect(page.getByRole('button',{name:'Try again'})).toBeVisible();
+  await page.unroute('**/api/v1/catalog/songs?*');
+  await page.route('https://image-cdn-ak.spotifycdn.com/**',route=>route.abort());
+  await page.goto('/search');
+  await expect(page.locator('.art-placeholder').first()).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link',{name:'Skip to music'})).toBeFocused();
+});

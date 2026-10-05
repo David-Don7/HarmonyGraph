@@ -1,0 +1,42 @@
+{
+  "observed_at_utc": "2026-09-19T00:44:30Z",
+  "environment": {
+    "deployment": "Docker Desktop Linux containers on Windows 11 / WSL2",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12450HX",
+    "logical_cpus": 12,
+    "docker_memory_limit_gib": 7.613,
+    "server_python": "3.12.14",
+    "postgresql": "17.6"
+  },
+  "source": {
+    "records": 679807,
+    "invalid_records": 0,
+    "bytes": 264198044,
+    "revision": "f3a8b678bd65639c01caa342921733f1db01be23",
+    "sha256": "9d2f4ccdc876a4e816712f128e4772b2af558c2a2923cce5be3a0364fbad9a8d",
+    "distinct_spotify_track_ids": 430323
+  },
+  "database_bytes": 2407459987,
+  "database_budget_gib": 20,
+  "container_memory_sample": {
+    "web_mib": 10.51,
+    "api_mib": 269.7,
+    "analysis_worker_mib": 73.21,
+    "metadata_worker_mib": 79.95,
+    "postgres_gib": 2.014
+  },
+  "analysis_throughput_window": {
+    "from_utc": "2026-09-19T00:42:37.161748+00:00",
+    "to_utc": "2026-09-19T00:44:19.884483+00:00",
+    "published_chart_artifacts_start": 1147,
+    "published_chart_artifacts_end": 1287,
+    "chart_artifacts_per_minute": 81.77,
+    "note": "Chart variants, not unique songs. One analysis worker; metadata and HTTP latency checks ran concurrently. A short observed window, not a full-corpus projection."
+  },
+  "checks": {
+    "docker_backend_tests_passed": 55,
+    "isolated_browser_workflows_passed": 6,
+    "latest_production_consumer_browser_workflows_passed": 3,
+    "latest_postgresql_migration_and_catalog_tests_passed": 3
+  }
+}

@@ -65,6 +65,9 @@ class Chord:
 
 def parse_chord(label: str, strict=False) -> Chord:
     raw = label.strip().replace("♭", "b").replace("♯", "#").replace("Δ", "maj").replace("ø", "m7b5").replace("°", "dim")
+    # Chordonomicon spells sharps with s, including slash basses.
+    raw = re.sub(r"(^|/)([A-G])s(?!us)", r"\1\2#", raw)
+    raw = raw.replace("no3d", "no3").replace("no5th", "no5")
     if raw.upper() in {"N", "NC", "N.C.", "&PAUSE", "NO CHORD"}:
         return Chord(None, "none", [], None, "no_chord")
     aliases = {
@@ -151,7 +154,8 @@ def parse_chord(label: str, strict=False) -> Chord:
             natural = degree_interval(degree) % 12
             value = degree_interval(accidental + degree) % 12
             if operation in {"no", "omit"}:
-                intervals = [v for v in intervals if v != natural]
+                omitted = {3, 4} if degree == "3" else {natural}
+                intervals = [v for v in intervals if v not in omitted]
             else:
                 if accidental and operation != "add":
                     intervals = [v for v in intervals if v != natural]
@@ -298,7 +302,30 @@ def interpret(chord: Chord, key: int, next_chord: Chord | None = None):
     return sorted(alternatives, key=lambda x: -x["weight"])
 
 
-def infer_keys(chords, sections, durations, config: AnalysisConfig):
+@lru_cache(maxsize=4096)
+def _chord_key_evidence(root, quality, pcs):
+    scores = []
+    for key in range(24):
+        scale = MINOR if key >= 12 else MAJOR
+        rel = (root - key % 12) % 12
+        inside = sum((pc - key % 12) % 12 in scale for pc in pcs) / len(pcs)
+        tonic_quality = "minor" if key >= 12 else "major"
+        score = 3 * inside - 1.5 + (1.8 if rel == 0 and quality == tonic_quality else 0)
+        score += 0.8 if rel == 7 and quality == "major" else 0
+        scores.append(score)
+    return tuple(scores)
+
+
+@lru_cache(maxsize=64)
+def _key_transition(penalty, local_keys):
+    matrix = np.full((24, 24), -penalty - 3.0 if local_keys else -1000.0)
+    np.fill_diagonal(matrix, 0)
+    matrix = matrix - logsumexp(matrix, axis=1)[:, None]
+    matrix.flags.writeable = False
+    return matrix
+
+
+def infer_keys(chords, sections, durations, config: AnalysisConfig, *, return_messages=False):
     n = len(chords)
     if not n:
         return np.empty((0, 24)), []
@@ -306,14 +333,9 @@ def infer_keys(chords, sections, durations, config: AnalysisConfig):
     for i, chord in enumerate(chords):
         if chord.status != "known":
             continue
-        for key in range(24):
-            scale = MINOR if key >= 12 else MAJOR
-            rel = (chord.root - key % 12) % 12
-            inside = sum((pc - key % 12) % 12 in scale for pc in chord.pcs) / len(chord.pcs)
-            tonic_quality = "minor" if key >= 12 else "major"
-            evidence[i, key] = 3 * inside - 1.5 + (1.8 if rel == 0 and chord.quality == tonic_quality else 0)
-            evidence[i, key] += 0.8 if rel == 7 and chord.quality == "major" else 0
-            evidence[i, key] *= min(max(durations[i] or 1, 0.25), 4)
+        evidence[i] = np.asarray(_chord_key_evidence(chord.root, chord.quality, tuple(chord.pcs))) * min(
+            max(durations[i] or 1, 0.25), 4
+        )
     if config.local_keys:
         radius = config.window // 2
         emissions = np.array([evidence[max(0, i - radius) : min(n, i + radius + 1)].mean(axis=0) for i in range(n)])
@@ -323,9 +345,7 @@ def infer_keys(chords, sections, durations, config: AnalysisConfig):
     transitions = []
     for i in range(1, n):
         penalty = config.change_penalty * (0.45 if sections[i] != sections[i - 1] and config.local_keys else 1)
-        matrix = np.full((24, 24), -penalty - 3.0 if config.local_keys else -1000.0)
-        np.fill_diagonal(matrix, 0)
-        transitions.append(matrix - logsumexp(matrix, axis=1)[:, None])
+        transitions.append(_key_transition(penalty, config.local_keys))
     alpha = np.empty((n, 24))
     alpha[0] = emissions[0] - np.log(24)
     delta = alpha.copy()
@@ -342,6 +362,8 @@ def infer_keys(chords, sections, durations, config: AnalysisConfig):
     path = [int(delta[-1].argmax())]
     for i in range(n - 1, 0, -1):
         path.append(int(pointers[i, path[-1]]))
+    if return_messages:
+        return posterior, path[::-1], emissions, transitions, beta
     return posterior, path[::-1]
 
 

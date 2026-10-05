@@ -54,14 +54,15 @@ def chordonomicon_records(path):
             genres = re.findall(r"'([^']+)'", row.get("genres", ""))
             if not genres:
                 genres = [row[key] for key in ("main_genre", "genre") if row.get(key)]
-            year = row.get("release_year") or row.get("decade")
+            date = row.get("release_date") or row.get("release_year") or ""
+            year = date[:4] if re.match(r"^\d{4}", date) else None
             try:
                 yield (
                     number,
                     {
                         "source_id": row["id"],
                         "title": row.get("title") or None,
-                        "artist": row.get("artist_id") or row.get("artist"),
+                        "artist": row.get("artist") or None,
                         "genres": list(dict.fromkeys(genres)),
                         "year": int(float(year)) if year and year.lower() != "nan" else None,
                         "sections": [s for s in sections if s["events"]],
@@ -246,7 +247,7 @@ def source_fingerprint(path, source):
 def ingest(session, path, source="jsonl", name=None, license="unspecified", progress=lambda p: None):
     if source not in READERS:
         raise ValueError(f"Unknown adapter {source}")
-    digest = fingerprint({"content": source_fingerprint(path, source), "adapter": source, "version": 1})
+    digest = fingerprint({"content": source_fingerprint(path, source), "adapter": source, "version": 2})
     dataset = session.scalar(select(Dataset).where(Dataset.fingerprint == digest))
     if dataset is None:
         dataset = Dataset(id=digest, name=name or Path(path).stem, fingerprint=digest, source=source, license=license)

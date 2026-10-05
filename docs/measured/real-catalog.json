@@ -1,0 +1,148 @@
+{
+  "checked_at": "2026-09-19T00:43:53.051229+00:00",
+  "coverage": {
+    "imported_records": 679807,
+    "resolved_records": 1370,
+    "identified_tracks": 430323,
+    "named_songs": 1150,
+    "searchable_songs": 1032,
+    "unresolved_records": 678437,
+    "unavailable_records": 239523,
+    "snapshot_id": "8205d63bdfb461bd7ea07ac54c0eb803c910324f03b0bd53482a4bbcfd4e021a",
+    "import_complete": true,
+    "genres": [
+      "alternative",
+      "country",
+      "electronic",
+      "jazz",
+      "metal",
+      "pop",
+      "pop rock",
+      "punk",
+      "rap",
+      "reggae",
+      "rock",
+      "soul"
+    ],
+    "source": "https://huggingface.co/datasets/ailsntua/Chordonomicon",
+    "license": "CC-BY-NC-4.0"
+  },
+  "environment": {
+    "client_python": "3.12.4",
+    "client_platform": "Windows-11-10.0.26200-SP0"
+  },
+  "sample_songs": [
+    {
+      "title": "House of Cards",
+      "artist": "Alexander Stewart",
+      "id": "00104ff40d05a8af0519771d4c9c02cdbd91533379433bdd940a63c9fb062c20",
+      "track_id": "1QNt0bhIXWu5XdlXlYI4iI"
+    },
+    {
+      "title": "Yeh Duniya Agar Mil Bhi Jaye To",
+      "artist": "Mohammed Rafi",
+      "id": "00afb920064b7ad4eafd1a0d8ce3b8f2ea0333966f3f7bb009fb78762f4df022",
+      "track_id": "6Im0l2HF8ctiYc8nSCOC4C"
+    },
+    {
+      "title": "Givin' Up Givin' In",
+      "artist": "The Three Degrees",
+      "id": "00dba174b4884953238b191e2a7e09b9534dbd461bb679b3bd0a369c271b89e8",
+      "track_id": "69F4BXLcsrlHg2s2mViAfG"
+    },
+    {
+      "title": "No Mercy",
+      "artist": "Cheap Trick",
+      "id": "0127db8fdc08db9cb5371d04d9367c66a93b9cb605ddbaf26cec232fd3c40fef",
+      "track_id": "46oyMzOudo7N23ywMyG0Tm"
+    },
+    {
+      "title": "Jekyll and Hyde",
+      "artist": "Five Finger Death Punch",
+      "id": "017e76c70b34e7a95259e5a30e4799f4ad7e2e045b1d33b678afcea51fd49037",
+      "track_id": "5dFEX82XB1ElGFwfCp0rql"
+    }
+  ],
+  "searches": {
+    "literal": {
+      "progression": "D A G",
+      "matches": 10,
+      "candidate_count": 500,
+      "candidate_limit_reached": true,
+      "warm_http_median_ms": 631.4553999995951,
+      "warm_http_p95_ms": 688.9151799995489,
+      "samples_ms": [
+        530.4978000003757,
+        623.0742999996437,
+        485.89350000020204,
+        509.115799999563,
+        561.3927000003969,
+        681.9402999999511,
+        639.8364999995465,
+        680.2415000001929,
+        665.9889000002295,
+        694.6218999992197
+      ]
+    },
+    "transposed": {
+      "progression": "D A G",
+      "matches": 10,
+      "candidate_count": 500,
+      "candidate_limit_reached": true,
+      "warm_http_median_ms": 388.04739999977755,
+      "warm_http_p95_ms": 602.0869049998962,
+      "samples_ms": [
+        405.44839999984106,
+        348.34569999929954,
+        490.66949999996723,
+        421.1638999995557,
+        693.2465999998385,
+        435.4761000004146,
+        364.844699999594,
+        370.64639999971405,
+        364.9961000000985,
+        318.1563999996797
+      ]
+    },
+    "functional": {
+      "progression": "D A G",
+      "matches": 10,
+      "candidate_count": 1500,
+      "candidate_limit_reached": true,
+      "warm_http_median_ms": 3092.041999999765,
+      "warm_http_p95_ms": 4165.0306099997115,
+      "samples_ms": [
+        3756.3320999997813,
+        4499.420299999656,
+        3066.1811999998463,
+        2613.467400000445,
+        2846.867699999166,
+        3210.9639000000243,
+        3117.9027999996833,
+        2430.5846999995993,
+        2482.920400000694,
+        3283.175000000483
+      ]
+    },
+    "fuzzy": {
+      "progression": "D A G",
+      "matches": 10,
+      "candidate_count": 1500,
+      "candidate_limit_reached": true,
+      "warm_http_median_ms": 4377.749249999852,
+      "warm_http_p95_ms": 5270.745239999633,
+      "samples_ms": [
+        3291.3085999998657,
+        4548.532199999499,
+        4503.731799999514,
+        4271.630999999616,
+        4088.5404000000563,
+        5324.167799999486,
+        3825.85299999937,
+        5205.450999999812,
+        4483.867500000088,
+        3262.3780000003535
+      ]
+    }
+  }
+}

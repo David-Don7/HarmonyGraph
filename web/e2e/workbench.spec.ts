@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('search evidence, song timeline, and responsive navigation', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/studio');
   await expect(page.getByRole('heading', { name: /Find the harmony/ })).toBeVisible();
   await page.getByRole('button', { name: 'Find matches' }).click();
   await expect(page.locator('.result').first()).toBeVisible();
@@ -18,7 +18,7 @@ test('search evidence, song timeline, and responsive navigation', async ({ page 
 
 test('independent annotation and research result export', async ({ page, request }) => {
   const profiles = await (await request.post('/api/v1/annotators', { data: { name: 'Browser test annotator' } })).json();
-  await page.goto('/');
+  await page.goto('/studio');
   await page.evaluate(id => localStorage.setItem('annotator', id), profiles.id);
   await page.reload();
   await page.getByRole('button', { name: 'Benchmark lab' }).click();
@@ -40,7 +40,7 @@ test('independent annotation and research result export', async ({ page, request
 
 test('durable jobs execute and experiment reports download', async ({ page, request }) => {
   test.setTimeout(180000);
-  await page.goto('/');
+  await page.goto('/studio');
   await page.getByRole('button', { name: 'Data & jobs', exact: true }).click();
   await page.getByRole('button', { name: 'Analyze & index corpus' }).click();
   await expect(page.getByText('Job queued.', { exact: false })).toBeVisible();

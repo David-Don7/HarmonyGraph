@@ -30,6 +30,9 @@ jobs:
       - run: npm ci && npm run build
         working-directory: web
       - run: harmonygraph migrate && harmonygraph demo
+      - run: python scripts/seed_catalog_fixture.py
+        env:
+          HARMONY_TEST_FIXTURES: '1'
       - run: harmonygraph worker > /tmp/harmony-worker.log 2>&1 &
       - run: harmonygraph serve > /tmp/harmony-api.log 2>&1 &
       - run: npm run dev > /tmp/harmony-web.log 2>&1 &

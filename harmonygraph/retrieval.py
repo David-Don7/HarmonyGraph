@@ -5,10 +5,14 @@ from collections import Counter, defaultdict, OrderedDict
 from threading import RLock
 from types import SimpleNamespace
 import numpy as np
-from sqlalchemy import select
+from sqlalchemy import select, text, true
+from sqlalchemy.orm import aliased
 from .contracts import AnalysisConfig, SearchRequest, SearchResponse, SearchResult
 from .db import (
     AnalysisRun,
+    CatalogRecord,
+    CatalogArtifact,
+    CatalogSnapshot,
     Artist,
     ChordDefinition,
     ChordEvent,
@@ -32,6 +36,7 @@ from .music import Chord, alignment, key_index, key_name, parse_chord, roman_fea
 _evidence_cache = OrderedDict()
 _evidence_lock = RLock()
 _cached_events = 0
+_reading_cache = OrderedDict()
 
 
 def active_run(session, analysis_id=None):
@@ -46,6 +51,23 @@ def active_run(session, analysis_id=None):
 
 
 def song_filter(statement, request):
+    if request.catalog_snapshot:
+        snapshot_analysis = (
+            select(CatalogSnapshot.analysis_id).where(CatalogSnapshot.id == request.catalog_snapshot).scalar_subquery()
+        )
+        snapshot_sequence = (
+            select(CatalogSnapshot.sequence).where(CatalogSnapshot.id == request.catalog_snapshot).scalar_subquery()
+        )
+        visible = (
+            select(CatalogRecord.song_id)
+            .join(CatalogArtifact, CatalogArtifact.record_id == CatalogRecord.id)
+            .where(
+                CatalogArtifact.analysis_id == snapshot_analysis,
+                CatalogArtifact.sequence <= snapshot_sequence,
+                CatalogRecord.metadata_status == "resolved",
+            )
+        )
+        statement = statement.where(Song.synthetic.is_(False), Song.id.in_(visible))
     if request.dataset_ids:
         statement = statement.where(Song.dataset_id.in_(request.dataset_ids))
     if request.song_ids:
@@ -58,6 +80,53 @@ def song_filter(statement, request):
         statement = statement.where(Song.year >= request.year_from)
     if request.year_to is not None:
         statement = statement.where(Song.year <= request.year_to)
+    return statement
+
+
+def posting_filter(statement, request, offset, length, postgres=False):
+    # Keep the ordered posting index as the outer scan. OFFSET 0 deliberately
+    # prevents PostgreSQL pulling these predicates into a full hash join/sort
+    # before LIMIT. Every visibility and structural constraint still applies.
+    if request.song_ids:
+        # An explicit bounded audit corpus should constrain the covering index,
+        # rather than scanning corpus-wide postings through a visibility subquery.
+        statement = statement.where(PatternIndex.song_id.in_(request.song_ids))
+    song = song_filter(select(Song.id).where(Song.id == PatternIndex.song_id), request)
+    if postgres:
+        # LATERAL lets PostgreSQL memoize a song's visibility across its many
+        # chord positions, while keeping the ordered scan and early LIMIT.
+        statement = statement.join(song.offset(0).correlate(PatternIndex).lateral(), true())
+        if request.section or not request.cross_sections:
+            section = select(Section.start, Section.end).where(Section.id == PatternIndex.section_id)
+            if request.section:
+                section = section.where(Section.kind == request.section)
+            bounds = section.offset(0).correlate(PatternIndex).lateral()
+            statement = statement.join(bounds, true())
+            if not request.cross_sections:
+                drift = 2 if request.mode == "fuzzy" else 0
+                start = PatternIndex.position - offset
+                end = start + length - 1
+                statement = statement.where(start >= bounds.c.start - drift, end <= bounds.c.end + drift * 2)
+                if request.boundary == "start":
+                    statement = statement.where(start <= bounds.c.start + request.boundary_distance + drift)
+                elif request.boundary == "end":
+                    statement = statement.where(end >= bounds.c.end - request.boundary_distance - drift * 2)
+        return statement
+    statement = statement.where(song.offset(0).correlate(PatternIndex).exists())
+    if request.section or not request.cross_sections:
+        section = select(Section.id).where(Section.id == PatternIndex.section_id)
+        if request.section:
+            section = section.where(Section.kind == request.section)
+        if not request.cross_sections:
+            drift = 2 if request.mode == "fuzzy" else 0
+            start = PatternIndex.position - offset
+            end = start + length - 1
+            section = section.where(start >= Section.start - drift, end <= Section.end + drift * 2)
+            if request.boundary == "start":
+                section = section.where(start <= Section.start + request.boundary_distance + drift)
+            elif request.boundary == "end":
+                section = section.where(end >= Section.end - request.boundary_distance - drift * 2)
+        statement = statement.where(section.offset(0).correlate(PatternIndex).exists())
     return statement
 
 
@@ -94,6 +163,8 @@ def candidates(session, run, request, config, tokens, query_chords):
             )
         )
         return [(sid, start) for sid, start in rows[: config.candidate_limit]], len(rows) > config.candidate_limit
+    if request.mode in {"literal", "transposed"}:
+        return exact_candidates(session, run, request, config, query_chords)
     if request.mode == "literal":
         lookups = [("literal", c.token, i) for i, c in enumerate(query_chords)]
         lookups += [
@@ -125,28 +196,27 @@ def candidates(session, run, request, config, tokens, query_chords):
                 feat = roman_features(token)
                 base = token.split("/")[0].removesuffix(feat["suffix"]) if feat["suffix"] else token.split("/")[0]
                 lookups.extend(("functional", value, i) for value in {base, base + "7", base + "maj7"})
-    for mode, token, offset in set(lookups):
-        stmt = (
-            select(PatternIndex.song_id, PatternIndex.position)
-            .join(Song)
-            .where(PatternIndex.analysis_id == run.id, PatternIndex.mode == mode, PatternIndex.token == token)
+    if request.ranking != "legacy_mixture":
+        # Key-free quality postings complement retained functional postings. Root
+        # intervals are added from a canonical realization of the Roman query.
+        from .music import NAMES
+
+        realized = [
+            parse_chord(NAMES[roman_features(t)["root"]] + ("m" if roman_features(t)["quality"] == "minor" else ""))
+            for t in tokens
+        ]
+        lookups += [("quality", roman_features(t)["quality"], i) for i, t in enumerate(tokens)]
+        lookups += [
+            ("transposed", f"{(b.root - a.root) % 12}:{a.shape}:{b.shape}", i)
+            for i, (a, b) in enumerate(zip(realized, realized[1:]))
+        ]
+    for mode, token, offset in sorted(set(lookups)):
+        stmt = select(PatternIndex.song_id, PatternIndex.position).where(
+            PatternIndex.analysis_id == run.id, PatternIndex.mode == mode, PatternIndex.token == token
         )
-        if request.section or not request.cross_sections:
-            stmt = stmt.join(Section, PatternIndex.section_id == Section.id)
-        if request.section:
-            stmt = stmt.where(Section.kind == request.section)
-        if not request.cross_sections:
-            drift = 2 if request.mode == "fuzzy" else 0
-            proposed_start = PatternIndex.position - offset
-            proposed_end = proposed_start + len(tokens) - 1
-            stmt = stmt.where(proposed_start >= Section.start - drift, proposed_end <= Section.end + drift * 2)
-            if request.boundary == "start":
-                stmt = stmt.where(proposed_start <= Section.start + request.boundary_distance + drift)
-            elif request.boundary == "end":
-                stmt = stmt.where(proposed_end >= Section.end - request.boundary_distance - drift * 2)
         rows = list(
             session.execute(
-                song_filter(stmt, request)
+                posting_filter(stmt, request, offset, len(tokens), session.get_bind().dialect.name == "postgresql")
                 .order_by(PatternIndex.song_id, PatternIndex.position)
                 .limit(config.candidate_limit * 4 + 1)
             )
@@ -162,6 +232,50 @@ def candidates(session, run, request, config, tokens, query_chords):
     return ordered[: config.candidate_limit], truncated or len(ordered) > config.candidate_limit
 
 
+def exact_candidates(session, run, request, config, chords):
+    """Require the complete absolute/interval sequence in the position index.
+
+    Every exact match satisfies these joins. Unlike broad unigram voting, this
+    avoids loading hundreds of nonmatching songs just to reject their chords.
+    The bounded result set and truncation flag remain explicit.
+    """
+    if request.mode == "literal":
+        if len(chords) >= 3:
+            lookups = [("literal_ngram", "|".join(c.token for c in chords[:3]), 0)]
+            lookups += [("literal", c.token, i) for i, c in enumerate(chords) if i >= 3]
+        else:
+            lookups = [("literal", c.token, i) for i, c in enumerate(chords)]
+    else:
+        lookups = [
+            ("transposed", f"{(b.root - a.root) % 12}:{a.shape}:{b.shape}", i)
+            for i, (a, b) in enumerate(zip(chords, chords[1:]))
+        ]
+        if not lookups:
+            lookups = [("shape", chords[0].shape, 0)]
+    mode, token, _ = lookups[0]
+    stmt = select(PatternIndex.song_id, PatternIndex.position).where(
+        PatternIndex.analysis_id == run.id, PatternIndex.mode == mode, PatternIndex.token == token
+    )
+    for mode, token, offset in lookups[1:]:
+        posting = aliased(PatternIndex)
+        stmt = stmt.join(
+            posting,
+            (posting.analysis_id == run.id)
+            & (posting.mode == mode)
+            & (posting.token == token)
+            & (posting.song_id == PatternIndex.song_id)
+            & (posting.position == PatternIndex.position + offset),
+        )
+    rows = list(
+        session.execute(
+            posting_filter(stmt, request, 0, len(chords), session.get_bind().dialect.name == "postgresql")
+            .order_by(PatternIndex.song_id, PatternIndex.position)
+            .limit(config.candidate_limit + 1)
+        )
+    )
+    return [(sid, pos) for sid, pos in rows[: config.candidate_limit]], len(rows) > config.candidate_limit
+
+
 def boundary_ok(request, start, end, first, last):
     distances = {"start": start - first.start, "end": last.end - end}
     if request.boundary == "start":
@@ -175,39 +289,78 @@ def boundary_ok(request, start, end, first, last):
     return True
 
 
-def load_song_evidence(session, song_id, run_id):
-    global _cached_events
-    cache_key = (session.get_bind(), run_id, song_id)
+def load_evidence_batch(session, song_ids, run_id):
+    """Fetch bounded candidate evidence in batches, not seven round trips per song."""
+    values = {}
+    missing = []
+    engine = session.get_bind()
     with _evidence_lock:
-        if cache_key in _evidence_cache:
-            _evidence_cache.move_to_end(cache_key)
-            return _evidence_cache[cache_key]
-    song = session.get(Song, song_id)
-    rows = list(
-        session.execute(
+        for sid in dict.fromkeys(song_ids):
+            key = (engine, run_id, sid)
+            if key in _evidence_cache:
+                values[sid] = _evidence_cache[key]
+                _evidence_cache.move_to_end(key)
+            else:
+                missing.append(sid)
+    for offset in range(0, len(missing), 32):
+        ids = missing[offset : offset + 32]
+        songs = {s.id: s for s in session.scalars(select(Song).where(Song.id.in_(ids)))}
+        event_rows = defaultdict(list)
+        for event, definition in session.execute(
             select(ChordEvent, ChordDefinition)
             .join(ChordDefinition)
-            .where(ChordEvent.song_id == song_id)
-            .order_by(ChordEvent.ordinal)
-        )
-    )
+            .where(ChordEvent.song_id.in_(ids))
+            .order_by(ChordEvent.song_id, ChordEvent.ordinal)
+        ):
+            event_rows[event.song_id].append((event, definition))
+        sections = defaultdict(dict)
+        for row in session.scalars(select(Section).where(Section.song_id.in_(ids))):
+            sections[row.song_id][row.id] = row
+        analyses = {
+            a.song_id: a
+            for a in session.scalars(
+                select(SongAnalysis).where(SongAnalysis.analysis_id == run_id, SongAnalysis.song_id.in_(ids))
+            )
+        }
+        alternatives = {sid: defaultdict(lambda: defaultdict(list)) for sid in ids}
+        for interpretation, sid in session.execute(
+            select(FunctionalInterpretation, ChordEvent.song_id)
+            .join(ChordEvent, FunctionalInterpretation.event_id == ChordEvent.id)
+            .where(ChordEvent.song_id.in_(ids), FunctionalInterpretation.analysis_id == run_id)
+        ):
+            alternatives[sid][interpretation.event_id][interpretation.key_index].append(interpretation.data)
+        relations = defaultdict(list)
+        for row in session.scalars(
+            select(HarmonicRelation).where(HarmonicRelation.analysis_id == run_id, HarmonicRelation.song_id.in_(ids))
+        ):
+            relations[row.song_id].append(row)
+        artists = {
+            a.id: a
+            for a in session.scalars(
+                select(Artist).where(Artist.id.in_({s.artist_id for s in songs.values() if s.artist_id}))
+            )
+        }
+        for sid in ids:
+            values[sid] = cache_evidence(
+                session,
+                sid,
+                run_id,
+                songs[sid],
+                event_rows[sid],
+                sections[sid],
+                analyses.get(sid),
+                alternatives[sid],
+                relations[sid],
+                artists.get(songs[sid].artist_id),
+            )
+    return values
+
+
+def cache_evidence(session, song_id, run_id, song, rows, sections, analysis, alternatives, relations, artist):
+    global _cached_events
+    cache_key = (session.get_bind(), run_id, song_id)
     events = [row[0] for row in rows]
     chords = [Chord(**row[1].canonical) for row in rows]
-    sections = {section.id: section for section in session.scalars(select(Section).where(Section.song_id == song_id))}
-    analysis = session.get(SongAnalysis, (run_id, song_id))
-    alternatives = defaultdict(lambda: defaultdict(list))
-    for interpretation in session.scalars(
-        select(FunctionalInterpretation)
-        .join(ChordEvent, FunctionalInterpretation.event_id == ChordEvent.id)
-        .where(ChordEvent.song_id == song_id, FunctionalInterpretation.analysis_id == run_id)
-    ):
-        alternatives[interpretation.event_id][interpretation.key_index].append(interpretation.data)
-    relations = list(
-        session.scalars(
-            select(HarmonicRelation).where(HarmonicRelation.song_id == song_id, HarmonicRelation.analysis_id == run_id)
-        )
-    )
-    artist = session.get(Artist, song.artist_id) if song.artist_id else None
 
     def snapshot(row):
         return SimpleNamespace(**record(row)) if row is not None else None
@@ -233,8 +386,54 @@ def load_song_evidence(session, song_id, run_id):
     return value
 
 
-def search(session, request: SearchRequest, persist=False, override=None, candidate_override=None, return_all=False):
+def load_song_evidence(session, song_id, run_id):
+    return load_evidence_batch(session, [song_id], run_id)[song_id]
+
+
+def passage_readings(session, song_id, run_id, start, end, evidence, config):
+    """Query-independent key/interpretation beams for one immutable passage."""
+    key = (session.get_bind(), song_id, run_id, start, end, config.top_k, config.uncertainty)
+    with _evidence_lock:
+        if key in _reading_cache:
+            _reading_cache.move_to_end(key)
+            return _reading_cache[key]
+    _, events, _, _, analysis, alternatives, _, _ = evidence
+    posterior = np.asarray(analysis.posterior[start : end + 1]).mean(axis=0)
+    keys = np.argsort(posterior)[::-1][: config.top_k if config.uncertainty else 1]
+    beams = {}
+    for candidate_key in keys:
+        beam = [([], 1.0)]
+        for event in events[start : end + 1]:
+            options = alternatives[event.id].get(int(candidate_key), [{"roman": "?", "weight": 1.0}])
+            expanded = [
+                (sequence + [option["roman"]], weight * option["weight"])
+                for sequence, weight in beam
+                for option in options
+            ]
+            beam = sorted(expanded, key=lambda item: -item[1])[:16]
+        beams[int(candidate_key)] = beam
+    value = posterior, keys, beams
+    with _evidence_lock:
+        _reading_cache[key] = value
+        while len(_reading_cache) > 4096:
+            _reading_cache.popitem(last=False)
+    return value
+
+
+def search(
+    session,
+    request: SearchRequest,
+    persist=False,
+    override=None,
+    candidate_override=None,
+    return_all=False,
+    evidence_context=None,
+    ranking_only=False,
+):
     started = time.perf_counter()
+    if session.get_bind().dialect.name == "postgresql":
+        # These bounded interactive lookups are too short to amortize LLVM JIT.
+        session.execute(text("SET LOCAL jit = off"))
     run = active_run(session, request.analysis_id)
     config = override or AnalysisConfig(**session.get(ModelConfiguration, run.configuration_id).parameters)
     tokens, query_chords = query_tokens(request)
@@ -246,7 +445,9 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
     )
     generated = time.perf_counter()
     results = []
-    cache = {}
+    path_messages = {}
+    cache = evidence_context if evidence_context is not None else {}
+    cache.update(load_evidence_batch(session, [sid for sid, _ in seeds if sid not in cache], run.id))
     for song_id, start in seeds:
         if song_id not in cache:
             cache[song_id] = load_song_evidence(session, song_id, run.id)
@@ -260,6 +461,18 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
             end = start + length - 1
             if end >= len(events):
                 continue
+            # Cheap exact-mode rejection before posterior and interpretation work.
+            segment = chords[start : end + 1]
+            if request.pattern == "progression" and request.mode == "literal":
+                if [c.token for c in segment] != [c.token for c in query_chords]:
+                    continue
+            if request.pattern == "progression" and request.mode == "transposed":
+                if any(c.status != "known" for c in segment):
+                    continue
+                if len({(c.root - q.root) % 12 for c, q in zip(segment, query_chords)}) != 1:
+                    continue
+                if any(c.shape != q.shape for c, q in zip(segment, query_chords)):
+                    continue
             first, last = sections[events[start].section_id], sections[events[end].section_id]
             if first.id != last.id and not request.cross_sections and request.pattern == "progression":
                 continue
@@ -271,8 +484,84 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
             features = {r.kind for r in selected_relations if r.confidence >= config.confidence_threshold}
             if not set(request.required_features).issubset(features):
                 continue
-            posterior = np.asarray(analysis.posterior[start : end + 1]).mean(axis=0)
-            keys = np.argsort(posterior)[::-1][: config.top_k if config.uncertainty else 1]
+            if request.ranking != "legacy_mixture":
+                from .paths import context_messages, passage_score
+
+                if song_id not in path_messages:
+                    path_messages[song_id] = context_messages(chords, events, config)
+                path_evidence = passage_score(
+                    tokens, chords, events, start, end, config, request, path_messages[song_id]
+                )
+                paths = path_evidence["paths"]
+                if wanted_key is not None and not any(wanted_key in p["keys"] for p in paths):
+                    continue
+                # No best-path threshold filter: this is expected-similarity ranking.
+                # All structurally eligible candidates remain in controlled comparisons.
+                leading = max(paths, key=lambda p: p["contribution"], default={"functions": [], "alignment": []})
+                weights = {
+                    "path_expectation": 1.0,
+                    "section": config.section_weight if config.sections and request.preferred_section else 0.0,
+                    "boundary": config.boundary_weight if config.boundaries and request.preferred_boundary else 0.0,
+                }
+                total = sum(weights.values())
+                distance = start - first.start if request.preferred_boundary == "start" else last.end - end
+                values = {
+                    "path_expectation": path_evidence["score"],
+                    "section": float(first.kind == request.preferred_section),
+                    "boundary": 1 / (1 + distance),
+                }
+                components = {
+                    name: {"value": values[name], "weight": w / total, "contribution": w / total * values[name]}
+                    for name, w in weights.items()
+                }
+                score = sum(c["contribution"] for c in components.values())
+                lower, upper = path_evidence["expected_similarity_bounds"]
+                fixed = sum(c["contribution"] for k, c in components.items() if k != "path_expectation")
+                path_evidence["ranking_bounds"] = (
+                    [lower / total + fixed, upper / total + fixed] if request.ranking == "path_expectation" else None
+                )
+                evidence = {
+                    "event_ids": [e.id for e in events[start : end + 1]],
+                    "dataset_id": song.dataset_id,
+                    "source_id": song.source_id,
+                    "synthetic": song.synthetic,
+                    "section_id": first.id,
+                    "position": {"from_start": start - first.start, "from_end": last.end - end},
+                    "configuration_id": run.configuration_id,
+                    "paths": path_evidence,
+                    "optional_features_matched": sorted(set(request.optional_features) & features),
+                    "context_labels": [e.label for e in events],
+                    "context_sections": [sections[e.section_id].label for e in events],
+                }
+                explanation = (
+                    f"{request.ranking}: {score:.4f}. {len(paths)} retained joint key/function paths; "
+                    f"omitted model mass {path_evidence['omitted_mass']:.4f}. "
+                    f"Expected similarity lies in [{lower:.4f}, {upper:.4f}]. "
+                    "The displayed leading alignment is one contribution, not the complete score."
+                )
+                results.append(
+                    SearchResult(
+                        passage_id=f"{song.id}:{start}:{end}",
+                        song_id=song.id,
+                        title=song.title or f"Untitled · {song.source_id}",
+                        artist=artist.name if artist else None,
+                        section=first.label,
+                        start=start,
+                        end=end,
+                        labels=[e.label for e in events[start : end + 1]],
+                        score=score,
+                        key_hypotheses=[],
+                        retained_mass=path_evidence["retained_mass"],
+                        interpretation=leading["functions"],
+                        alignment=leading["alignment"],
+                        components=components,
+                        evidence=evidence,
+                        explanation=explanation,
+                        analysis_id=run.id,
+                    )
+                )
+                continue
+            posterior, keys, beams = passage_readings(session, song_id, run.id, start, end, cache[song_id], config)
             if wanted_key is not None and wanted_key not in keys:
                 continue
             hypotheses = []
@@ -281,16 +570,7 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
             exact_function = False
             for key in keys:
                 probability = float(posterior[key]) if config.uncertainty else 1.0
-                # A bounded beam retains functional alternatives rather than collapsing each event independently.
-                beam = [([], 1.0)]
-                for event in events[start : end + 1]:
-                    options = alternatives[event.id].get(int(key), [{"roman": "?", "weight": 1.0}])
-                    expanded = [
-                        (sequence + [option["roman"]], weight * option["weight"])
-                        for sequence, weight in beam
-                        for option in options
-                    ]
-                    beam = sorted(expanded, key=lambda item: -item[1])[:16]
+                beam = beams[int(key)]
                 conditional = 0.0
                 key_best = {"sequence": [], "similarity": 0.0, "weight": 0.0}
                 for sequence, interpretation_weight in beam:
@@ -346,11 +626,11 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
                     {"operation": "match", "query_index": i, "target_index": i, "cost": 0.0} for i in range(length)
                 ]
             else:
-                if request.mode == "functional" and not exact_function:
+                if request.mode == "functional" and not exact_function and not ranking_only:
                     continue
                 # Tolerance applies to the best alignment, independently of posterior confidence.
                 best_similarity = max((h["best_interpretation"]["similarity"] for h in hypotheses), default=0)
-                if request.mode == "fuzzy" and 1 - best_similarity > request.tolerance:
+                if request.mode == "fuzzy" and 1 - best_similarity > request.tolerance and not ranking_only:
                     continue
                 matched = [op for op in best_trace if op["operation"] in {"match", "substitute"}]
                 quality_matches = 0
@@ -452,6 +732,16 @@ def search(session, request: SearchRequest, persist=False, override=None, candid
         unique.values(),
         key=lambda r: (-r.score, -len(r.evidence["optional_features_matched"]), r.song_id, r.start, r.end),
     )[: None if return_all else request.limit]
+    if request.ranking == "path_expectation":
+        outside = [r for r in unique.values() if r.passage_id not in {item.passage_id for item in results}]
+        max_outside = max((r.evidence["paths"]["ranking_bounds"][1] for r in outside), default=-1.0)
+        for result in results:
+            result.evidence["paths"]["candidate_set_top_k_membership_certified"] = (
+                result.evidence["paths"]["ranking_bounds"][0] > max_outside
+            )
+            result.evidence["paths"]["certificate_scope"] = (
+                "Evaluated candidate set only; omitted corpus candidates are not bounded"
+            )
     finished = time.perf_counter()
     if persist:
         query = RetrievalQuery(request=request.model_dump(), analysis_id=run.id)

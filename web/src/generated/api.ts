@@ -4,6 +4,91 @@
  */
 
 export interface paths {
+    "/api/v1/catalog/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coverage */
+        get: operations["coverage_api_v1_catalog_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/songs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Songs */
+        get: operations["songs_api_v1_catalog_songs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Collections */
+        get: operations["collections_api_v1_catalog_collections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/songs/{identifier}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["detail_api_v1_catalog_songs__identifier__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find */
+        post: operations["find_api_v1_catalog_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -255,6 +340,40 @@ export interface paths {
         put?: never;
         /** Freeze Configuration */
         post: operations["freeze_configuration_api_v1_configurations_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research-v2/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Research V2 Status */
+        get: operations["research_v2_status_api_v1_research_v2_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/benchmark-queries/{query_id}/blind-pool": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Blind Pool */
+        get: operations["blind_pool_api_v1_benchmark_queries__query_id__blind_pool_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -585,6 +704,16 @@ export interface components {
              */
             qualities: boolean;
         };
+        /** AnnotatorInput */
+        AnnotatorInput: {
+            /** Name */
+            name: string;
+            /**
+             * Qualifications
+             * @default
+             */
+            qualifications: string;
+        };
         /** BenchmarkInput */
         BenchmarkInput: {
             /** Name */
@@ -595,100 +724,138 @@ export interface components {
              */
             synthetic: boolean;
         };
-        /** FreezeInput */
-        FreezeInput: {
-            /** Benchmark Id */
-            benchmark_id: string;
-            /** Configuration Id */
-            configuration_id?: string | null;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /** JobInput */
-        JobInput: {
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "demo" | "import" | "analyze" | "evaluate" | "optimize" | "export";
-            /**
-             * Parameters
-             * @default {}
-             */
-            parameters: {
-                [key: string]: unknown;
-            };
-        };
-        /** JobResponse */
-        JobResponse: {
+        /** CatalogDetail */
+        CatalogDetail: {
             /** Id */
             id: string;
-            /** Kind */
-            kind: string;
-            /** Status */
-            status: string;
-            /** Progress */
-            progress: number;
-            /** Parameters */
-            parameters: {
-                [key: string]: unknown;
-            };
-            /** Result */
-            result: {
-                [key: string]: unknown;
-            };
-            /** Error */
-            error: string | null;
-            /** Created At */
-            created_at: string;
-            /** Updated At */
-            updated_at: string;
-        };
-        /** JudgmentInput */
-        JudgmentInput: {
-            /** Query Id */
-            query_id: string;
-            /** Passage Id */
-            passage_id: string;
-            /** Annotator Id */
-            annotator_id: string;
-            /** Relevance */
-            relevance: number;
-            /** Correctness */
-            correctness?: number | null;
-            /** Clarity */
-            clarity?: number | null;
-            /** Usefulness */
-            usefulness?: number | null;
+            /** Song Id */
+            song_id: string | null;
+            /** Track Id */
+            track_id: string;
+            /** Title */
+            title: string;
+            /** Artist */
+            artist: string;
+            /** Artwork */
+            artwork: string | null;
+            /** Genre */
+            genre: string | null;
+            /** Year */
+            year: number | null;
+            /** Date Precision */
+            date_precision: string | null;
+            /** Spotify Url */
+            spotify_url: string;
+            /** Metadata Status */
+            metadata_status: string;
             /**
-             * Notes
-             * @default
-             */
-            notes: string;
-            /**
-             * Adjudicated
+             * Searchable
              * @default false
              */
-            adjudicated: boolean;
+            searchable: boolean;
+            /** Sections */
+            sections: components["schemas"]["CatalogSection"][];
+            /** Variants */
+            variants: {
+                [key: string]: string;
+            }[];
+            /** Source Id */
+            source_id: string;
+            /** Source */
+            source: string;
+            /** License */
+            license: string;
+            /** Snapshot Id */
+            snapshot_id: string | null;
+            /** Metadata Source */
+            metadata_source: string;
         };
-        /** NameInput */
-        NameInput: {
-            /** Name */
-            name: string;
+        /** CatalogMatch */
+        CatalogMatch: {
+            song: components["schemas"]["CatalogSong"];
+            match: components["schemas"]["SearchResult"];
+            /** Score */
+            score: number;
+            /** Query Contributions */
+            query_contributions: {
+                [key: string]: unknown;
+            }[];
+            /** Variants */
+            variants: {
+                [key: string]: unknown;
+            }[];
         };
-        /** QueryInput */
-        QueryInput: {
-            /** Category */
-            category: string;
-            request: components["schemas"]["SearchRequest"];
-            /** Source Song Id */
-            source_song_id?: string | null;
+        /** CatalogPage */
+        CatalogPage: {
+            /** Items */
+            items: components["schemas"]["CatalogSong"][];
+            /** Next Cursor */
+            next_cursor: string | null;
         };
-        /** SearchRequest */
-        SearchRequest: {
+        /** CatalogSearchResponse */
+        CatalogSearchResponse: {
+            /** Results */
+            results: components["schemas"]["CatalogMatch"][];
+            /** Snapshot Id */
+            snapshot_id: string | null;
+            /** Candidate Limit Reached */
+            candidate_limit_reached: boolean;
+            /** Candidate Count */
+            candidate_count: number;
+            /** Query Interpretations */
+            query_interpretations: {
+                [key: string]: unknown;
+            }[];
+            /** Timings */
+            timings: {
+                [key: string]: number;
+            };
+        };
+        /** CatalogSection */
+        CatalogSection: {
+            /** Label */
+            label: string;
+            /** Events */
+            events: string[];
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Practice */
+            practice: components["schemas"]["PracticeChord"][];
+        };
+        /** CatalogSong */
+        CatalogSong: {
+            /** Id */
+            id: string;
+            /** Song Id */
+            song_id: string | null;
+            /** Track Id */
+            track_id: string;
+            /** Title */
+            title: string;
+            /** Artist */
+            artist: string;
+            /** Artwork */
+            artwork: string | null;
+            /** Genre */
+            genre: string | null;
+            /** Year */
+            year: number | null;
+            /** Date Precision */
+            date_precision: string | null;
+            /** Spotify Url */
+            spotify_url: string;
+            /** Metadata Status */
+            metadata_status: string;
+            /**
+             * Searchable
+             * @default false
+             */
+            searchable: boolean;
+        };
+        /** ConsumerSearchRequest */
+        ConsumerSearchRequest: {
             /**
              * Progression
              * @default
@@ -696,10 +863,31 @@ export interface components {
             progression: string;
             /**
              * Mode
-             * @default functional
+             * @default transposed
              * @enum {string}
              */
             mode: "literal" | "transposed" | "functional" | "fuzzy";
+            /**
+             * Ranking
+             * @default legacy_mixture
+             * @enum {string}
+             */
+            ranking: "legacy_mixture" | "path_expectation" | "hard_path" | "max_path" | "equal_paths" | "shuffled_paths";
+            /**
+             * Path Budget
+             * @default 64
+             */
+            path_budget: number;
+            /**
+             * Function Budget
+             * @default 16
+             */
+            function_budget: number;
+            /**
+             * Match Threshold
+             * @default 0.8
+             */
+            match_threshold: number;
             /**
              * Pattern
              * @default progression
@@ -769,6 +957,247 @@ export interface components {
              * @default []
              */
             song_ids: string[];
+            /** Catalog Snapshot */
+            catalog_snapshot?: string | null;
+            /**
+             * Notation
+             * @default chords
+             * @enum {string}
+             */
+            notation: "chords" | "roman";
+        };
+        /** FreezeInput */
+        FreezeInput: {
+            /** Benchmark Id */
+            benchmark_id: string;
+            /** Configuration Id */
+            configuration_id?: string | null;
+            /** Catalog Snapshot */
+            catalog_snapshot?: string | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** JobInput */
+        JobInput: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "demo" | "import" | "analyze" | "evaluate" | "optimize" | "export" | "catalog_download" | "catalog_import" | "catalog_metadata" | "catalog_analyze";
+            /**
+             * Parameters
+             * @default {}
+             */
+            parameters: {
+                [key: string]: unknown;
+            };
+        };
+        /** JobResponse */
+        JobResponse: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Progress */
+            progress: number;
+            /** Parameters */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            };
+            /** Error */
+            error: string | null;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** JudgmentInput */
+        JudgmentInput: {
+            /** Query Id */
+            query_id: string;
+            /** Passage Id */
+            passage_id: string;
+            /** Annotator Id */
+            annotator_id: string;
+            /** Relevance */
+            relevance?: number | null;
+            /**
+             * Status
+             * @default judged
+             * @enum {string}
+             */
+            status: "judged" | "insufficient_context" | "unsupported" | "unresolved";
+            /**
+             * Supported Interpretations
+             * @default []
+             */
+            supported_interpretations: string[];
+            /** Section Correct */
+            section_correct?: boolean | null;
+            /**
+             * Evidence Basis
+             * @default chord-only
+             * @enum {string}
+             */
+            evidence_basis: "chord-only" | "audio-assisted";
+            /**
+             * Adjudication Sources
+             * @default []
+             */
+            adjudication_sources: string[];
+            /** Correctness */
+            correctness?: number | null;
+            /** Clarity */
+            clarity?: number | null;
+            /** Usefulness */
+            usefulness?: number | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Adjudicated
+             * @default false
+             */
+            adjudicated: boolean;
+        };
+        /** PracticeChord */
+        PracticeChord: {
+            /** Notes */
+            notes: number[];
+            /** Status */
+            status: string;
+        };
+        /** QueryInput */
+        QueryInput: {
+            /** Category */
+            category: string;
+            request: components["schemas"]["SearchRequest"];
+            /** Source Song Id */
+            source_song_id?: string | null;
+            /**
+             * Protocol
+             * @default {}
+             */
+            protocol: {
+                [key: string]: unknown;
+            };
+        };
+        /** SearchRequest */
+        SearchRequest: {
+            /**
+             * Progression
+             * @default
+             */
+            progression: string;
+            /**
+             * Mode
+             * @default functional
+             * @enum {string}
+             */
+            mode: "literal" | "transposed" | "functional" | "fuzzy";
+            /**
+             * Ranking
+             * @default legacy_mixture
+             * @enum {string}
+             */
+            ranking: "legacy_mixture" | "path_expectation" | "hard_path" | "max_path" | "equal_paths" | "shuffled_paths";
+            /**
+             * Path Budget
+             * @default 64
+             */
+            path_budget: number;
+            /**
+             * Function Budget
+             * @default 16
+             */
+            function_budget: number;
+            /**
+             * Match Threshold
+             * @default 0.8
+             */
+            match_threshold: number;
+            /**
+             * Pattern
+             * @default progression
+             * @enum {string}
+             */
+            pattern: "progression" | "relative_minor_modulation";
+            /** Section */
+            section?: string | null;
+            /** Preferred Section */
+            preferred_section?: string | null;
+            /** Boundary */
+            boundary?: ("start" | "end" | "interior" | "adjacent") | null;
+            /** Preferred Boundary */
+            preferred_boundary?: ("start" | "end") | null;
+            /**
+             * Boundary Distance
+             * @default 0
+             */
+            boundary_distance: number;
+            /** Genre */
+            genre?: string | null;
+            /** Year From */
+            year_from?: number | null;
+            /** Year To */
+            year_to?: number | null;
+            /** Key */
+            key?: string | null;
+            /**
+             * Cross Sections
+             * @default false
+             */
+            cross_sections: boolean;
+            /**
+             * Every Chorus
+             * @default false
+             */
+            every_chorus: boolean;
+            /**
+             * Required Features
+             * @default []
+             */
+            required_features: string[];
+            /**
+             * Optional Features
+             * @default []
+             */
+            optional_features: string[];
+            /**
+             * Tolerance
+             * @default 0.45
+             */
+            tolerance: number;
+            /**
+             * Limit
+             * @default 20
+             */
+            limit: number;
+            /** Analysis Id */
+            analysis_id?: string | null;
+            /**
+             * Dataset Ids
+             * @default []
+             */
+            dataset_ids: string[];
+            /**
+             * Song Ids
+             * @default []
+             */
+            song_ids: string[];
+            /** Catalog Snapshot */
+            catalog_snapshot?: string | null;
         };
         /** SearchResponse */
         SearchResponse: {
@@ -852,6 +1281,148 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    coverage_api_v1_catalog_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    songs_api_v1_catalog_songs_get: {
+        parameters: {
+            query?: {
+                q?: string;
+                genre?: string | null;
+                decade?: number | null;
+                cursor?: string | null;
+                limit?: number;
+                ready?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    collections_api_v1_catalog_collections_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    detail_api_v1_catalog_songs__identifier__get: {
+        parameters: {
+            query?: {
+                snapshot_id?: string | null;
+            };
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    find_api_v1_catalog_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsumerSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_api_v1_health_get: {
         parameters: {
             query?: never;
@@ -1329,6 +1900,57 @@ export interface operations {
             };
         };
     };
+    research_v2_status_api_v1_research_v2_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    blind_pool_api_v1_benchmark_queries__query_id__blind_pool_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                query_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     annotators_api_v1_annotators_get: {
         parameters: {
             query?: never;
@@ -1358,7 +1980,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["NameInput"];
+                "application/json": components["schemas"]["AnnotatorInput"];
             };
         };
         responses: {

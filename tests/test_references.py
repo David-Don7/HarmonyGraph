@@ -86,6 +86,6 @@ def test_optuna_migration_namespace_is_separate(tmp_path):
         command.upgrade(config, "head")
     optuna.storages.RDBStorage(url=engine.url.render_as_string(hide_password=False))
     with engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM harmonygraph_schema_version")) == "0001"
+        assert connection.scalar(text("SELECT version_num FROM harmonygraph_schema_version")) == "0004"
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) != "0001"
     engine.dispose()

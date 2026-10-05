@@ -1,24 +1,126 @@
 # HarmonyGraph
 
-An uncertainty-aware, section-sensitive harmonic search application and research workbench. Search chord passages, inspect competing local-key readings, trace each score to stored evidence, and run reproducible baseline and optimization experiments.
+**Find songs through the chords they share.** HarmonyGraph combines a music discovery app with a reproducible research workbench for symbolic harmonic analysis and passage retrieval.
 
-![HarmonyGraph search workspace](docs/preview.png)
+Enter a progression such as `C G Am F` to find matching passages, including songs in another key. Explore the surrounding chord sections, inspect why a passage matched, listen through Spotify, practice the harmony in your browser, and save songs and searches locally. Researchers can open `/studio` to inspect tonal interpretations, annotate benchmark candidates, and compare retrieval methods.
+
+HarmonyGraph works with **chord annotations**, rather than recognizing chords from audio. The consumer app displays named real catalog songs; synthetic fixtures are reserved for the research and testing workflows.
+
+## Contents
+
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Technology and project structure](#technology-and-project-structure)
+- [Start with Docker](#start-with-docker)
+- [Native Windows development](#native-windows-development)
+- [Search and research workflows](#workflows)
+- [Dataset imports](#dataset-imports)
+- [Research direction (v2)](#research-direction-v2)
+- [Verification](#verification)
+- [Operational details](#operational-details)
+- [Data attribution and software licensing](#data-attribution-and-software-licensing)
+
+## Features
+
+### Music discovery
+
+- **Search by progression:** match exact chords, the same movement in any key, harmonic function, or a similar progression with missing or extra events.
+- **Filter passages:** restrict results by song section, section position, genre, year, local key, and harmonic features.
+- **Browse real songs:** explore title/artist search and genre/decade collections backed by the Chordonomicon catalog and provider-resolved metadata.
+- **Inspect the evidence:** view matched sections, alternative interpretations, alignment operations, and contributions to the ranking score.
+- **Listen and practice:** load Spotify playback on demand or synthesize annotated chords locally with tempo, section looping, and manual stepping. Practice timing is evenly spaced; it is not synchronized to the recording.
+- **Keep a local library:** save songs and searches in browser storage without an account.
+
+### Research Studio
+
+- Versioned chord parsing, local-key inference, harmonic interpretations, and positional indexes.
+- Independent annotation, preserved judgment history, adjudication, and benchmark revisions.
+- Retrieval baselines, ablations, validation-only optimization, frozen evaluation manifests, and JSON/CSV exports.
+- An explicit research v2 mode for coherent context-conditioned key/function paths, with retained and omitted probability mass exposed.
+- Durable background jobs with progress, cancellation, retries, and interrupted-work recovery.
+
+## How it works
+
+1. **Import chord charts.** The catalog pipeline downloads a pinned Chordonomicon release and stores source records in resumable batches. Research adapters also accept JSONL, Billboard, and Isophonics inputs.
+2. **Resolve catalog metadata.** A separate worker uses the supplied Spotify identifiers to obtain names and artwork through Spotify oEmbed. Records that cannot be resolved remain visible in coverage statistics without invented names.
+3. **Analyze and index.** The analysis worker parses chords, infers local-key hypotheses, assigns functional alternatives, and builds passage indexes. Completed catalog batches publish immutable search snapshots.
+4. **Retrieve and explain.** Indexed evidence proposes candidate passages; a bounded matcher aligns and ranks them. The API returns the matched chords, structural context, score components, and search diagnostics.
+5. **Evaluate deliberately.** Studio manages benchmark definitions, judgments, controlled comparisons, and frozen corpus/configuration identities. Model confidence and matching scores are not human relevance probabilities.
+
+The [real-catalog verification report](docs/real-catalog-results.md) records a complete **679,807-chart source import** and a measured subset of **1,032 unique search-ready songs**. These are historical observations, not the coverage of a fresh installation or a claim that the full source is searchable. Metadata resolution and indexing proceed incrementally; inspect `/api/v1/catalog/coverage` for your installation's current status.
+
+## Technology and project structure
+
+| Layer | Technology / responsibility |
+| --- | --- |
+| Browser | React 19, TypeScript, Vite, TanStack Query, Recharts, Web Audio |
+| API and CLI | Python 3.12+, FastAPI, Pydantic, Click |
+| Persistence | SQLAlchemy and Alembic; PostgreSQL for Docker, SQLite for native development |
+| Analysis and experiments | NumPy, SciPy, scikit-learn, Optuna |
+| Packaging and verification | Docker Compose, pytest, Ruff, Playwright, GitHub Actions |
+
+```text
+HarmonyGraph/
+├── harmonygraph/       # API, CLI, workers, ingestion, analysis, retrieval, research
+├── web/                # Consumer app, Studio, generated API types, browser tests
+├── migrations/         # Versioned application database migrations
+├── tests/              # Backend tests and bounded source-format fixtures
+├── scripts/            # Startup, smoke checks, audits, benchmarks, schema export
+├── docs/               # Architecture, dataset guides, research specs, measured reports
+├── data/demo/          # Original synthetic research fixtures
+├── compose.yaml        # PostgreSQL, migrations, API, workers, web, verification profile
+└── requirements*.lock  # Pinned Python dependencies
+```
+
+Downloaded catalogs, local databases, environment files, generated artifacts, and installed dependencies are excluded from Git. A clone contains the application and documented fixtures; start the catalog pipeline to populate real-song discovery.
+
+Read the [implementation map](docs/architecture.md), [catalog operating guide](docs/real-catalog.md), and [performance/recovery/practice follow-up](docs/improvements.md) for further detail.
+
+## Research direction (v2)
+
+The governing specification is [research proposal v2](docs/research-proposal-v2.md), read together with the [novelty audit](docs/novelty-audit-2026-10-01.md). The implemented alternative ranks passages using coherent context-conditioned key/function paths, preserves omitted probability mass, and keeps the original averaged-key mixture as a baseline. It does not establish human relevance or research superiority.
+
+See [implementation status, measured bounded audit, and remaining gates](docs/research-v2-alignment.md). In Studio, choose **Context paths · research v2** and enter 2–8 Roman numerals. Consumer music search keeps its existing behavior. The legacy `evaluate`/Optuna runner is historical infrastructure; its `proposed` label refers to the old mixture, not v2.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/research_v2_local_audit.py
+# Uses the existing pinned CSV; writes an isolated eight-chart audit and review packet.
+harmonygraph research-v2-audit --song-id <id> --song-id <id> --examples 8
+harmonygraph research-v2-compare <benchmark-id> --song-id <development-song-id>
+```
+
+No large study, optimization or annotation recruitment starts automatically.
 
 ## Start with Docker
 
-Requires Docker Desktop with its Linux engine running.
+Requires Git and Docker Desktop with its Linux engine running. This is the simplest way to run the complete application with PostgreSQL and both background workers.
 
 ```powershell
+git clone https://github.com/David-Don7/HarmonyGraph.git
+cd HarmonyGraph
 Copy-Item .env.example .env
 docker compose up --build -d
+docker compose exec api harmonygraph catalog start
 ```
 
-Open **http://localhost:8080**. In **Data & jobs**, select **Load synthetic demo**. The worker imports 120 original synthetic songs, analyzes/indexes them, and creates a 120-query benchmark. Progress and failures appear in the job list. OpenAPI documentation is at **http://localhost:8000/docs**.
+Open **http://localhost:8080**. The pinned 679,807-record Chordonomicon release imports in resumable batches; Spotify metadata resolution and harmonic indexing progressively publish real songs. Coverage distinguishes imported records, named songs, and searchable songs. See [real-catalog operation and limitations](docs/real-catalog.md). OpenAPI documentation is at **http://localhost:8000/docs**.
 
 ```powershell
 docker compose logs -f worker
+docker compose exec api harmonygraph catalog status
 docker compose exec api harmonygraph search "V7 I" --section chorus --boundary end
 ```
+
+The CLI `search` command exposes research retrieval. Use the discovery page or `POST /api/v1/catalog/search` to search the consumer catalog. A new installation may initially show no songs while the workers import, resolve, and index data.
+
+| Address | Purpose |
+| --- | --- |
+| `http://localhost:8080` | Music discovery app |
+| `http://localhost:8080/studio` | Research workbench |
+| `http://localhost:8000/docs` | Interactive API documentation |
+| `http://localhost:8000/api/v1/catalog/coverage` | Live catalog progress and snapshot |
+
+Stop services with `docker compose down`; the named database and artifact volumes retain their data.
 
 Only the web and API are exposed, on localhost. PostgreSQL remains internal. This is a local research application without authentication. Synthetic judgments are constructed test fixtures, never expert labels.
 
@@ -31,7 +133,7 @@ python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements-dev.lock
 .\.venv\Scripts\python -m pip install --no-deps -e .
 .\.venv\Scripts\python -m harmonygraph.cli migrate
-.\.venv\Scripts\python -m harmonygraph.cli demo
+.\.venv\Scripts\python -m harmonygraph.cli catalog start
 .\.venv\Scripts\python -m harmonygraph.cli serve
 ```
 
@@ -41,7 +143,9 @@ In a second terminal:
 .\.venv\Scripts\python -m harmonygraph.jobs
 ```
 
-In a third terminal:
+For metadata resolution, start another worker terminal with `$env:JOB_KINDS='catalog_metadata'` and the same worker command. The setup script starts both workers automatically.
+
+In a frontend terminal:
 
 ```powershell
 cd web
@@ -65,7 +169,7 @@ If ports are occupied, run the API with `serve --port 8010`, set `$env:API_PROXY
 
 ## Dataset imports
 
-Place inputs under `data/imports/` for web/worker imports. The CLI accepts an explicit local path. No real corpus is downloaded or redistributed automatically.
+Place additional research inputs under `data/imports/`. The CLI accepts an explicit local path. `catalog start` explicitly downloads the pinned Chordonomicon release; normal startup never seeds synthetic songs. Use the catalog pipeline for the full release rather than the small-file research adapter shown below.
 
 ```powershell
 harmonygraph import data/imports/chordonomicon.csv --source chordonomicon --name Chordonomicon --license CC-BY-NC-4.0
@@ -112,7 +216,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests require the demo-loaded API, worker, and frontend to be running. Set `BASE_URL` when testing a nondefault frontend port. PostgreSQL tests require `TEST_POSTGRES_URL` pointing at a disposable database. CI supplies PostgreSQL and runs the Python checks, production build, and browser scenarios.
+Consumer browser tests (`music.spec.ts`) require a named, indexed real song. Research browser tests (`workbench.spec.ts`) exercise `/studio` in a separately demo-loaded environment. Set `BASE_URL` when testing a nondefault frontend port. PostgreSQL tests require `TEST_POSTGRES_URL` pointing at a disposable database.
 
 See [verification results](docs/demo-results.md) for checks actually executed in this delivery, rather than treating the presence of a test as proof it passed.
 
@@ -120,7 +224,7 @@ See [verification results](docs/demo-results.md) for checks actually executed in
 
 The full local Docker workflow has passed. See [Docker verification results](docs/docker-results.md) for executed checks and measured latency.
 
-After the stack is healthy, run the bounded synthetic workflow against its PostgreSQL-backed API:
+For the current consumer workflow, run `python scripts/catalog_smoke.py`. The historical bounded synthetic workflow below is for an isolated research environment:
 
 ```powershell
 .\.venv\Scripts\python scripts/docker_smoke.py
@@ -147,6 +251,18 @@ npm run test:e2e
 
 ## Operational details
 
+| Setting | Purpose |
+| --- | --- |
+| `POSTGRES_PASSWORD` | Local Compose database password; the example value is a development default |
+| `DATABASE_URL` | Backend database connection; native execution defaults to SQLite |
+| `DATA_ROOT` | Dataset storage directory (`data` by default) |
+| `CATALOG_DATABASE_BUDGET_GB` | Indexing storage budget, 20 GiB by default |
+| `JOB_KINDS` | Restrict a worker to selected job types, such as `catalog_metadata` |
+| `API_PROXY_TARGET` | Native frontend's API target when using another API port |
+| `HARMONY_CA_FILE` | Optional additional trusted CA file for an HTTPS-inspecting network |
+
+Compose reads `.env` for its configured variables. Set native-process environment variables explicitly in PowerShell when overriding defaults, for example `$env:DATABASE_URL = '...'`. Keep real credentials and local environment files out of commits.
+
 Jobs use row locking, leases, a heartbeat, cooperative cancellation, and stale-job recovery. Failed analyses never replace the active version. Cache entries contain immutable per-song snapshots and are bounded to 256 songs / 50,000 events. APIs expose status and timing; worker logs include job IDs. Dataset and experiment jobs perform expensive work offline.
 
 Back up PostgreSQL without PowerShell binary redirection:
@@ -168,3 +284,13 @@ Database migrations run before API/worker startup. `harmonygraph index` runs the
 ## Research boundaries
 
 The implementation is a research prototype with heuristic major/minor harmony rules. Full-corpus scalability, expert-verified relevance, confidence calibration, and scientific superiority remain empirical work. No audio recognition, music generation, embeddings, graph database, cloud deployment, or authenticated team accounts are included.
+
+The word **Graph** refers to inspectable harmonic relationships within the analysis; persistence uses a relational database. Spotify controls recording availability and playback. Imported annotations preserve source limitations, and candidate limits make search approximate. Research v2 remains a bounded, explicitly selected research method; consumer search retains its existing behavior.
+
+## Data attribution and software licensing
+
+The Chordonomicon source release is recorded as **CC BY-NC 4.0** in the catalog provenance. Its pinned revision, checksums, attribution, and import behavior are documented in the [catalog guide](docs/real-catalog.md). Source data is downloaded separately and retains its own terms; the public repository does not bundle the full catalog or song recordings.
+
+Original synthetic demo fixtures are documented as **CC0-1.0**. Additional research datasets retain their respective release terms; see [dataset formats and attribution](docs/datasets.md).
+
+This repository currently has no software `LICENSE` file. Public visibility does not itself grant an open-source software license, and dataset licenses should not be treated as a license for the application code.

@@ -53,6 +53,10 @@ class NameInput(BaseModel):
     name: str = Field(min_length=1, max_length=120)
 
 
+class AnnotatorInput(NameInput):
+    qualifications: str = ""
+
+
 class BenchmarkInput(NameInput):
     synthetic: bool = False
 
@@ -63,12 +67,14 @@ class QueryInput(BaseModel):
     request: SearchRequest
 
     source_song_id: str | None = None
+    protocol: dict = {}
 
 
 class FreezeInput(BaseModel):
     benchmark_id: str
 
     configuration_id: str | None = None
+    catalog_snapshot: str | None = None
 
 
 def create_app(engine=None):
@@ -97,6 +103,10 @@ def create_app(engine=None):
     def db():
         with sessions() as session:
             yield session
+
+    from .consumer import router
+
+    app.include_router(router(db))
 
     def require(session, model, identifier):
         value = session.get(model, identifier)
@@ -293,14 +303,27 @@ def create_app(engine=None):
 
         require(session, Benchmark, body.benchmark_id)
 
-        return freeze(session, body.benchmark_id, body.configuration_id)
+        return freeze(session, body.benchmark_id, body.configuration_id, body.catalog_snapshot)
+
+    @app.get("/api/v1/research-v2/status")
+    def research_v2_status():
+        from .research_v2 import READINESS
+
+        return READINESS
+
+    @app.get("/api/v1/benchmark-queries/{query_id}/blind-pool")
+    def blind_pool(query_id: str, session=Depends(db)):
+        query = require(session, BenchmarkQuery, query_id)
+        from .research_v2 import blinded_pool
+
+        return blinded_pool(query)
 
     @app.get("/api/v1/annotators")
     def annotators(session=Depends(db)):
         return [record(row) for row in session.scalars(select(Annotator).order_by(Annotator.name))]
 
     @app.post("/api/v1/annotators", status_code=201)
-    def annotator(body: NameInput, session=Depends(db)):
+    def annotator(body: AnnotatorInput, session=Depends(db)):
         name = body.name.strip()
 
         if not name:
@@ -309,7 +332,7 @@ def create_app(engine=None):
         row = session.scalar(select(Annotator).where(Annotator.name == name))
 
         if row is None:
-            row = Annotator(name=name)
+            row = Annotator(name=name, qualifications=body.qualifications)
 
             session.add(row)
 
@@ -362,6 +385,9 @@ def create_app(engine=None):
         from .retrieval import query_tokens
 
         query_tokens(body.request)
+        from .research_v2 import freeze_context
+
+        body.protocol = freeze_context(session, body.source_song_id, body.protocol)
 
         row = BenchmarkQuery(benchmark_id=benchmark_id, **body.model_dump())
 
@@ -381,6 +407,9 @@ def create_app(engine=None):
         from .retrieval import query_tokens
 
         query_tokens(body.request)
+        from .research_v2 import freeze_context
+
+        body.protocol = freeze_context(session, body.source_song_id, body.protocol)
 
         original = require(session, Benchmark, query.benchmark_id)
 
@@ -408,6 +437,7 @@ def create_app(engine=None):
                 source_song_id=body.source_song_id if changed else previous.source_song_id,
                 pool=[] if changed else previous.pool,
                 synthetic_judgments={} if changed else previous.synthetic_judgments,
+                protocol=body.protocol if changed else previous.protocol,
             )
 
             session.add(copied)
@@ -423,6 +453,10 @@ def create_app(engine=None):
     def pool(query_id: str, session=Depends(db)):
         query = require(session, BenchmarkQuery, query_id)
 
+        if session.scalar(select(RelevanceJudgment.id).where(RelevanceJudgment.query_id == query.id).limit(1)):
+            raise ValueError(
+                "This pool has judgments and is frozen. Edit the query to create a new benchmark revision."
+            )
         request = SearchRequest(**query.request)
 
         request.limit = 100
@@ -430,12 +464,21 @@ def create_app(engine=None):
         from .research import absolute_query
 
         requests = [request.model_copy(update={"limit": 25})]
+        if request.ranking != "legacy_mixture":
+            requests.extend(
+                request.model_copy(update={"ranking": method, "limit": 25})
+                for method in ("legacy_mixture", "hard_path")
+            )
 
         if request.pattern == "progression":
             absolute = absolute_query(session, query, request)
 
             for mode in ("literal", "transposed"):
-                requests.append(request.model_copy(update={"mode": mode, "progression": absolute, "limit": 25}))
+                requests.append(
+                    request.model_copy(
+                        update={"mode": mode, "progression": absolute, "ranking": "legacy_mixture", "limit": 25}
+                    )
+                )
 
             if request.mode in {"functional", "fuzzy"}:
                 requests.append(request.model_copy(update={"mode": "fuzzy", "limit": 25}))
@@ -449,6 +492,9 @@ def create_app(engine=None):
                 value = pooled.setdefault(candidate.passage_id, candidate.model_dump())
 
                 value["evidence"].setdefault("pooling_modes", []).append(candidate_request.mode)
+                if "context_labels" not in value["evidence"]:
+                    context = load_song_evidence(session, candidate.song_id, candidate.analysis_id)
+                    value["evidence"]["context_labels"] = [e.label for e in context[1]]
 
         query.pool = [pooled[key] for key in sorted(pooled)]
 
@@ -481,7 +527,19 @@ def create_app(engine=None):
             passage_id=body.passage_id,
             annotator_id=body.annotator_id,
             relevance=body.relevance,
-            ratings={k: getattr(body, k) for k in ("correctness", "clarity", "usefulness")},
+            ratings={
+                k: getattr(body, k)
+                for k in (
+                    "correctness",
+                    "clarity",
+                    "usefulness",
+                    "status",
+                    "supported_interpretations",
+                    "section_correct",
+                    "evidence_basis",
+                    "adjudication_sources",
+                )
+            },
             notes=body.notes,
             adjudicated=body.adjudicated,
         )
