@@ -45,6 +45,10 @@ def active_run(session, analysis_id=None):
         if analysis_id
         else session.scalar(select(AnalysisRun).where(AnalysisRun.active.is_(True)))
     )
+    if run is None and analysis_id is None:
+        snapshot = session.scalar(select(CatalogSnapshot).where(CatalogSnapshot.active.is_(True)))
+        if snapshot:
+            run = session.get(AnalysisRun, snapshot.analysis_id)
     if not run or run.status != "ready":
         raise ValueError("No ready analysis. Import a dataset and run analysis first.")
     return run
@@ -434,7 +438,18 @@ def search(
     if session.get_bind().dialect.name == "postgresql":
         # These bounded interactive lookups are too short to amortize LLVM JIT.
         session.execute(text("SET LOCAL jit = off"))
+    if request.catalog_snapshot:
+        snapshot = session.get(CatalogSnapshot, request.catalog_snapshot)
+        if snapshot is None or (request.analysis_id and snapshot.analysis_id != request.analysis_id):
+            raise ValueError("Catalog snapshot does not belong to the selected analysis")
+        request = request.model_copy(update={"analysis_id": snapshot.analysis_id})
     run = active_run(session, request.analysis_id)
+    if not request.catalog_snapshot and request.analysis_id is None and run.report.get("catalog"):
+        snapshot = session.scalar(select(CatalogSnapshot).where(
+            CatalogSnapshot.active.is_(True), CatalogSnapshot.analysis_id == run.id
+        ))
+        if snapshot:
+            request = request.model_copy(update={"analysis_id": run.id, "catalog_snapshot": snapshot.id})
     config = override or AnalysisConfig(**session.get(ModelConfiguration, run.configuration_id).parameters)
     tokens, query_chords = query_tokens(request)
     wanted_key = key_index(request.key) if request.key else None

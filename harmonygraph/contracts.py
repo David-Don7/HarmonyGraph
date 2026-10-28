@@ -180,6 +180,7 @@ class JobInput(StrictModel):
         "catalog_import",
         "catalog_metadata",
         "catalog_analyze",
+        "research_v2_compare",
     ]
     parameters: dict = {}
 

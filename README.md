@@ -76,6 +76,11 @@ Downloaded catalogs, local databases, environment files, generated artifacts, an
 
 Read the [implementation map](docs/architecture.md), [catalog operating guide](docs/real-catalog.md), and [performance/recovery/practice follow-up](docs/improvements.md) for further detail.
 
+For macOS/Linux Docker startup, backups and recovery, see [local operations](docs/local-operations.md).
+The [study workflow](docs/study-workflow.md) explains Studio's research pilot panel,
+blinded review exports/imports, annotation readiness and durable v2 comparisons.
+Independent evaluation and strong prior-work comparisons remain research gates.
+
 ## Research direction (v2)
 
 The governing specification is [research proposal v2](docs/research-proposal-v2.md), read together with the [novelty audit](docs/novelty-audit-2026-10-01.md). The implemented alternative ranks passages using coherent context-conditioned key/function paths, preserves omitted probability mass, and keeps the original averaged-key mixture as a baseline. It does not establish human relevance or research superiority.

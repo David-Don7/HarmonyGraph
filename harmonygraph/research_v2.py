@@ -151,7 +151,10 @@ def labels(session, query, annotator=None):
     return {p: grade for p, grade in latest.items() if grade is not None}
 
 
-def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_budget=32, annotator=None):
+def controlled_run(
+    session, benchmark_id, song_ids, *, analysis_id=None, path_budget=32, annotator=None,
+    progress=lambda p: None, expected_benchmark_hash=None,
+):
     """Development-only comparison; one union pool, one analysis/config, same hard filters.
 
     Held-out work deliberately requires a separate frozen study rather than silently
@@ -159,6 +162,11 @@ def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_bu
     """
     if not song_ids or len(song_ids) > 50:
         raise ValueError("Choose 1–50 explicit development songs")
+    from .research import benchmark_hash
+
+    starting_hash = benchmark_hash(session, benchmark_id)
+    if expected_benchmark_hash and starting_hash != expected_benchmark_hash:
+        raise ValueError("Benchmark or judgments changed after this comparison was queued; queue a new comparison")
     queries = list(
         session.scalars(
             select(BenchmarkQuery).where(BenchmarkQuery.benchmark_id == benchmark_id).order_by(BenchmarkQuery.id)
@@ -183,9 +191,11 @@ def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_bu
     run = active_run(session, analysis_id)
     config = AnalysisConfig(**session.get(ModelConfiguration, run.configuration_id).parameters)
     evidence = load_evidence_batch(session, song_ids, run.id)
+    if set(song_ids) != set(evidence) or any(e[4] is None for e in evidence.values()):
+        raise ValueError("All selected songs must have evidence in the chosen analysis")
     output = {method: [] for method in METHODS}
     shared = {}
-    for q in queries:
+    for query_index, q in enumerate(queries):
         request = SearchRequest(
             **{
                 **q.request,
@@ -201,7 +211,8 @@ def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_bu
         seeds, truncated = candidates(session, run, request, config, tokens, chords)
         shared[q.id] = {"seeds": [list(seed) for seed in seeds], "truncated": truncated, "hash": fingerprint(seeds)}
         truth = labels(session, q, annotator)
-        for method in METHODS:
+        for method_index, method in enumerate(METHODS):
+            progress((query_index * len(METHODS) + method_index) / (len(queries) * len(METHODS)))
             cfg = (
                 config.model_copy(update={"theory_costs": False, "insertion": 1.0, "deletion": 1.0})
                 if method == "uniform_path"
@@ -211,11 +222,15 @@ def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_bu
             response = search(
                 session, req, override=cfg, candidate_override=seeds, evidence_context=evidence, ranking_only=True
             )
+            ranked = [r.passage_id for r in response.results]
+            cutoff = ranked[:10]
+            judged = sum(p in truth for p in cutoff)
             metrics = (
-                retrieval_metrics([r.passage_id for r in response.results], truth)
-                if truth
-                else {"ndcg@10": None, "reason": "No resolved chord-only judgments for this label policy"}
+                retrieval_metrics(ranked, truth)
+                if truth and judged == len(cutoff)
+                else {"ndcg@10": None, "reason": "Missing resolved chord-only judgments at the ranking cutoff"}
             )
+            metrics.update(judged_at_10=judged, returned_at_10=len(cutoff))
             output[method].append(
                 {
                     "query_id": q.id,
@@ -226,13 +241,15 @@ def controlled_run(session, benchmark_id, song_ids, *, analysis_id=None, path_bu
                     "passages": [r.passage_id for r in response.results],
                 }
             )
-    from .research import benchmark_hash
+    session.expire_all()
+    if benchmark_hash(session, benchmark_id) != starting_hash:
+        raise ValueError("Benchmark or judgments changed during comparison; queue a new comparison")
 
     manifest = {
         "version": VERSION,
         "analysis_id": run.id,
         "configuration_hash": fingerprint(config.model_dump()),
-        "benchmark_hash": benchmark_hash(session, benchmark_id),
+        "benchmark_hash": starting_hash,
         "song_ids": sorted(song_ids),
         "content_hashes": sorted((sid, e[0].content_hash) for sid, e in evidence.items()),
         "candidate_pools": shared,

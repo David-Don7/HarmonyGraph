@@ -125,6 +125,14 @@ def dispatch(session, kind, parameters, progress):
         )
     if kind == "export":
         return export_experiment(session, parameters["experiment_id"])
+    if kind == "research_v2_compare":
+        from .research_v2 import controlled_run
+
+        return controlled_run(
+            session, parameters["benchmark_id"], parameters["song_ids"],
+            analysis_id=parameters["analysis_id"], path_budget=parameters["path_budget"], progress=progress,
+            expected_benchmark_hash=parameters["benchmark_hash"],
+        )
     raise ValueError("Unknown job type")
 
 

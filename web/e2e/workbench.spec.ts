@@ -25,6 +25,7 @@ test('independent annotation and research result export', async ({ page, request
   await page.locator('.query-list > button').first().click();
   await page.getByRole('button', { name: 'Build candidate pool' }).click();
   await expect(page.locator('.judgment').first()).toBeVisible();
+  await page.locator('.judgment').first().getByLabel('Relevance', {exact: true}).selectOption('2');
   await page.getByRole('button', { name: 'Save judgment', exact: true }).first().click();
   await expect(page.getByText('Judgment saved.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Experiments', exact: true }).click();

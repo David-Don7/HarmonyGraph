@@ -62,6 +62,32 @@ def test_stream_import_idempotent_and_resume(session, catalog):
     assert not browse(session, q="%absent").items
 
 
+def test_studio_uses_published_catalog_without_requiring_full_reanalysis(engine, session, catalog):
+    from harmonygraph.analysis import process_song
+    from harmonygraph.catalog import materialize
+    from harmonygraph.contracts import AnalysisConfig, SearchRequest
+    from harmonygraph.retrieval import active_run, search
+
+    _, _, rows = catalog
+    rows[2].metadata_status = "pending"
+    session.commit()
+    analyze_batch(session, {}, lambda _: None)
+    snapshot = session.scalar(select(CatalogSnapshot).where(CatalogSnapshot.active.is_(True)))
+    run = active_run(session)
+    assert run.id == snapshot.analysis_id and not run.active
+    # A committed analysis outside the publication watermark must not leak into
+    # Studio's default search while the next catalog batch is being prepared.
+    rows[2].metadata_status = "resolved"
+    song_id = materialize(session, rows[2])
+    process_song(session, song_id, run.id, AnalysisConfig())
+    session.commit()
+    response = search(session, SearchRequest(progression="C G", mode="literal"))
+    assert response.results
+    assert song_id not in {r.song_id for r in response.results}
+    client = TestClient(create_app(engine))
+    assert client.get("/api/v1/overview").json()["analysis"]["id"] == run.id
+
+
 def test_atomic_publication_and_snapshot_isolation(session, catalog):
     _, _, rows = catalog
     rows[2].metadata_status = "pending"

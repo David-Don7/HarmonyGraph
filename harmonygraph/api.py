@@ -151,7 +151,10 @@ def create_app(engine=None):
 
     @app.get("/api/v1/overview")
     def overview(session=Depends(db)):
-        run = session.scalar(select(AnalysisRun).where(AnalysisRun.active.is_(True)))
+        try:
+            run = active_run(session)
+        except ValueError:
+            run = None
 
         return {
             "songs": session.scalar(select(func.count()).select_from(Song)),
@@ -233,6 +236,10 @@ def create_app(engine=None):
 
     @app.post("/api/v1/jobs", response_model=JobResponse, status_code=202)
     def submit_job(body: JobInput, session=Depends(db)):
+        if body.kind == "research_v2_compare":
+            from .study import comparison_parameters
+
+            body.parameters = comparison_parameters(session, body.parameters)
         job = Job(kind=body.kind, parameters=body.parameters)
 
         session.add(job)
@@ -310,6 +317,41 @@ def create_app(engine=None):
         from .research_v2 import READINESS
 
         return READINESS
+
+    @app.get("/api/v1/benchmarks/{benchmark_id}/readiness")
+    def study_readiness(benchmark_id: str, session=Depends(db)):
+        from .study import readiness
+
+        require(session, Benchmark, benchmark_id)
+        return readiness(session, benchmark_id)
+
+    @app.get("/api/v1/benchmarks/{benchmark_id}/review-packet")
+    def study_packet(benchmark_id: str, session=Depends(db)):
+        from .study import review_packet
+
+        require(session, Benchmark, benchmark_id)
+        return Response(
+            json.dumps(review_packet(session, benchmark_id), indent=2),
+            media_type="application/json",
+            headers={"Content-Disposition": "attachment; filename=blinded-review-packet.json"},
+        )
+
+    @app.post("/api/v1/benchmarks/{benchmark_id}/review-responses")
+    def study_responses(benchmark_id: str, body: dict, session=Depends(db)):
+        from .study import ReviewSubmission, import_reviews
+
+        require(session, Benchmark, benchmark_id)
+        return import_reviews(session, benchmark_id, ReviewSubmission.model_validate(body))
+
+    @app.get("/api/v1/jobs/{job_id}/export")
+    def export_job(job_id: str, session=Depends(db)):
+        job = require(session, Job, job_id)
+        if job.kind != "research_v2_compare" or job.status != "completed":
+            raise ValueError("A completed research v2 comparison is required")
+        return Response(
+            json.dumps(job.result, indent=2), media_type="application/json",
+            headers={"Content-Disposition": "attachment; filename=research-v2-comparison.json"},
+        )
 
     @app.get("/api/v1/benchmark-queries/{query_id}/blind-pool")
     def blind_pool(query_id: str, session=Depends(db)):
@@ -521,6 +563,16 @@ def create_app(engine=None):
 
         if body.passage_id not in {r["passage_id"] for r in query.pool}:
             raise ValueError("Judgments must reference a passage in this query's candidate pool")
+
+        if body.adjudicated:
+            sources = list(session.scalars(select(RelevanceJudgment).where(
+                RelevanceJudgment.id.in_(body.adjudication_sources),
+                RelevanceJudgment.query_id == body.query_id,
+                RelevanceJudgment.passage_id == body.passage_id,
+                RelevanceJudgment.adjudicated.is_(False),
+            )))
+            if len(sources) != len(set(body.adjudication_sources)) or len({s.annotator_id for s in sources}) < 2:
+                raise ValueError("Adjudication requires source judgments from at least two distinct reviewers of this passage")
 
         row = RelevanceJudgment(
             query_id=body.query_id,

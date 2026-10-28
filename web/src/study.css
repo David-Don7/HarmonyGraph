@@ -1,0 +1,10 @@
+/* Existing Studio frame retained. One full-width sheet; controls wrap below 640px. */
+.study-workspace{padding:24px;margin-bottom:32px;background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.study-title{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.study-title h2{font-size:24px;margin-bottom:12px}.study-title>span{font-size:13px;color:var(--muted)}
+.study-controls{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin:16px 0}.study-controls label{flex:1 1 240px;min-width:0;display:grid;gap:8px;font-size:14px}.study-controls button,.study-controls .button{margin-bottom:1px}
+.study-controls textarea{resize:vertical;min-height:76px}.study-readiness{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:24px 0}
+.study-readiness dt{font-size:13px;color:var(--muted);margin-bottom:6px}.study-readiness dd{margin:0;font-size:16px}
+.study-table{overflow:auto;max-height:400px;margin:16px 0}.study-table caption{text-align:left;font-size:14px;margin-bottom:12px}.study-table table{min-width:580px}.study-table th{font-size:12px;letter-spacing:0;text-transform:none}.study-table td{font-size:13px}.study-table small{display:block;margin-top:6px;font-size:12px}.study-table .num{text-align:right;font-variant-numeric:tabular-nums}.study-table th:nth-last-child(-n+3){text-align:right}.study-issue{color:var(--gold)}
+.study-run{margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}.study-run>div:first-child{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}.study-run progress{width:100%;margin:12px 0;accent-color:var(--gold)}
+@media(max-width:640px){.study-workspace{padding:16px}.study-readiness{grid-template-columns:1fr;gap:12px}.study-readiness>div{display:flex;justify-content:space-between;gap:12px}.study-readiness dd{font-size:14px;text-align:right}.study-controls label{flex-basis:100%}.study-title>span{margin-bottom:12px}.study-workspace li{overflow-wrap:anywhere}}

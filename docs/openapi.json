@@ -824,6 +824,166 @@
         }
       }
     },
+    "/api/v1/benchmarks/{benchmark_id}/readiness": {
+      "get": {
+        "summary": "Study Readiness",
+        "operationId": "study_readiness_api_v1_benchmarks__benchmark_id__readiness_get",
+        "parameters": [
+          {
+            "name": "benchmark_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Benchmark Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/{benchmark_id}/review-packet": {
+      "get": {
+        "summary": "Study Packet",
+        "operationId": "study_packet_api_v1_benchmarks__benchmark_id__review_packet_get",
+        "parameters": [
+          {
+            "name": "benchmark_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Benchmark Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/{benchmark_id}/review-responses": {
+      "post": {
+        "summary": "Study Responses",
+        "operationId": "study_responses_api_v1_benchmarks__benchmark_id__review_responses_post",
+        "parameters": [
+          {
+            "name": "benchmark_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Benchmark Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/export": {
+      "get": {
+        "summary": "Export Job",
+        "operationId": "export_job_api_v1_jobs__job_id__export_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/benchmark-queries/{query_id}/blind-pool": {
       "get": {
         "summary": "Blind Pool",
@@ -2292,7 +2452,8 @@
               "catalog_download",
               "catalog_import",
               "catalog_metadata",
-              "catalog_analyze"
+              "catalog_analyze",
+              "research_v2_compare"
             ],
             "title": "Kind"
           },

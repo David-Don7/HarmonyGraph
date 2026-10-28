@@ -363,6 +363,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/benchmarks/{benchmark_id}/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Study Readiness */
+        get: operations["study_readiness_api_v1_benchmarks__benchmark_id__readiness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/benchmarks/{benchmark_id}/review-packet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Study Packet */
+        get: operations["study_packet_api_v1_benchmarks__benchmark_id__review_packet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/benchmarks/{benchmark_id}/review-responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Study Responses */
+        post: operations["study_responses_api_v1_benchmarks__benchmark_id__review_responses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Job */
+        get: operations["export_job_api_v1_jobs__job_id__export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/benchmark-queries/{query_id}/blind-pool": {
         parameters: {
             query?: never;
@@ -986,7 +1054,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "demo" | "import" | "analyze" | "evaluate" | "optimize" | "export" | "catalog_download" | "catalog_import" | "catalog_metadata" | "catalog_analyze";
+            kind: "demo" | "import" | "analyze" | "evaluate" | "optimize" | "export" | "catalog_download" | "catalog_import" | "catalog_metadata" | "catalog_analyze" | "research_v2_compare";
             /**
              * Parameters
              * @default {}
@@ -1916,6 +1984,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    study_readiness_api_v1_benchmarks__benchmark_id__readiness_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                benchmark_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    study_packet_api_v1_benchmarks__benchmark_id__review_packet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                benchmark_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    study_responses_api_v1_benchmarks__benchmark_id__review_responses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                benchmark_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_job_api_v1_jobs__job_id__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
