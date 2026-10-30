@@ -293,14 +293,14 @@ def boundary_ok(request, start, end, first, last):
     return True
 
 
-def load_evidence_batch(session, song_ids, run_id):
+def load_evidence_batch(session, song_ids, run_id, *, include_interpretations=True):
     """Fetch bounded candidate evidence in batches, not seven round trips per song."""
     values = {}
     missing = []
     engine = session.get_bind()
     with _evidence_lock:
         for sid in dict.fromkeys(song_ids):
-            key = (engine, run_id, sid)
+            key = (engine, run_id, sid, include_interpretations)
             if key in _evidence_cache:
                 values[sid] = _evidence_cache[key]
                 _evidence_cache.move_to_end(key)
@@ -327,12 +327,13 @@ def load_evidence_batch(session, song_ids, run_id):
             )
         }
         alternatives = {sid: defaultdict(lambda: defaultdict(list)) for sid in ids}
-        for interpretation, sid in session.execute(
-            select(FunctionalInterpretation, ChordEvent.song_id)
-            .join(ChordEvent, FunctionalInterpretation.event_id == ChordEvent.id)
-            .where(ChordEvent.song_id.in_(ids), FunctionalInterpretation.analysis_id == run_id)
-        ):
-            alternatives[sid][interpretation.event_id][interpretation.key_index].append(interpretation.data)
+        if include_interpretations:
+            for interpretation, sid in session.execute(
+                select(FunctionalInterpretation, ChordEvent.song_id)
+                .join(ChordEvent, FunctionalInterpretation.event_id == ChordEvent.id)
+                .where(ChordEvent.song_id.in_(ids), FunctionalInterpretation.analysis_id == run_id)
+            ):
+                alternatives[sid][interpretation.event_id][interpretation.key_index].append(interpretation.data)
         relations = defaultdict(list)
         for row in session.scalars(
             select(HarmonicRelation).where(HarmonicRelation.analysis_id == run_id, HarmonicRelation.song_id.in_(ids))
@@ -356,13 +357,15 @@ def load_evidence_batch(session, song_ids, run_id):
                 alternatives[sid],
                 relations[sid],
                 artists.get(songs[sid].artist_id),
+                include_interpretations=include_interpretations,
             )
     return values
 
 
-def cache_evidence(session, song_id, run_id, song, rows, sections, analysis, alternatives, relations, artist):
+def cache_evidence(session, song_id, run_id, song, rows, sections, analysis, alternatives, relations, artist,
+                   *, include_interpretations=True):
     global _cached_events
-    cache_key = (session.get_bind(), run_id, song_id)
+    cache_key = (session.get_bind(), run_id, song_id, include_interpretations)
     events = [row[0] for row in rows]
     chords = [Chord(**row[1].canonical) for row in rows]
 
@@ -462,7 +465,13 @@ def search(
     results = []
     path_messages = {}
     cache = evidence_context if evidence_context is not None else {}
-    cache.update(load_evidence_batch(session, [sid for sid, _ in seeds if sid not in cache], run.id))
+    # Path models construct their own coherent readings; loading the legacy
+    # event-by-key table wastes database I/O and Python object allocation.
+    # Shared experiment contexts stay complete for subsequent legacy controls.
+    cache.update(load_evidence_batch(
+        session, [sid for sid, _ in seeds if sid not in cache], run.id,
+        include_interpretations=request.ranking == "legacy_mixture" or evidence_context is not None,
+    ))
     for song_id, start in seeds:
         if song_id not in cache:
             cache[song_id] = load_song_evidence(session, song_id, run.id)

@@ -18,8 +18,8 @@ test('research v2 exposes coherent paths, omitted mass and legacy control', asyn
   await page.getByRole('button', {name: 'Find matches', exact: true}).click();
   await expect(page.locator('.result').first()).toBeVisible();
   await page.getByRole('button', {name: 'Why this matches'}).first().click();
-  await expect(page.getByRole('heading', {name: 'Alternative context paths'}).first()).toBeVisible();
-  await expect(page.getByText(/Retained joint mass:/).first()).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Alternative interpretations'}).first()).toBeVisible();
+  await expect(page.getByText('Retained model mass').first()).toBeVisible();
   await page.getByText(/retained paths and their alignments/).first().click();
   await expect(page.getByText(/Original probability/).first()).toBeVisible();
   await page.getByLabel('Research model').selectOption('legacy_mixture');

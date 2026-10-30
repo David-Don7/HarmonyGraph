@@ -24,7 +24,7 @@ classified ambiguity benchmark. No reviewer is recruited or contacted by this ap
 3. Build its candidate pool. Current pooling combines multiple retrieval modes;
    random/adversarial candidates, overlap deduplication and strong prior-work
    comparators still require the main-study protocol described below.
-4. In **Experiments → Research pilot**, select the benchmark and inspect its
+4. In **Experiments → Context-path comparison**, select the benchmark and inspect its
    protocol issues and annotation coverage. Download the blinded packet. It omits
    scores, model rankings, synthetic ground truth and other reviewers' answers.
 5. Reviewers work independently on the same material. Each packet has blank

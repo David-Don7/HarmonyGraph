@@ -4,7 +4,7 @@ test('search evidence, song timeline, and responsive navigation', async ({ page 
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/studio');
-  await expect(page.getByRole('heading', { name: /Find the harmony/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Harmonic search', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Find matches' }).click();
   await expect(page.locator('.result').first()).toBeVisible();
   await page.getByRole('button', { name: 'Why this matches' }).first().click();
@@ -22,13 +22,15 @@ test('independent annotation and research result export', async ({ page, request
   await page.evaluate(id => localStorage.setItem('annotator', id), profiles.id);
   await page.reload();
   await page.getByRole('button', { name: 'Benchmark lab' }).click();
+  await page.getByLabel('Benchmark', {exact: true}).selectOption({index: 1});
   await page.locator('.query-list > button').first().click();
   await page.getByRole('button', { name: 'Build candidate pool' }).click();
   await expect(page.locator('.judgment').first()).toBeVisible();
-  await page.locator('.judgment').first().getByLabel('Relevance', {exact: true}).selectOption('2');
+  await page.locator('.judgment').first().getByRole('combobox', {name: 'Relevance', exact: true}).selectOption('2');
   await page.getByRole('button', { name: 'Save judgment', exact: true }).first().click();
   await expect(page.getByText('Judgment saved.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Experiments', exact: true }).click();
+  await page.getByText('Legacy experiments and tuning', {exact: true}).click();
   await expect(page.getByRole('heading', { name: 'Automatic parameter optimization' })).toBeVisible();
   const exports = page.getByRole('link', { name: 'JSON', exact: true });
   if (await exports.count()) {
@@ -43,9 +45,11 @@ test('durable jobs execute and experiment reports download', async ({ page, requ
   test.setTimeout(180000);
   await page.goto('/studio');
   await page.getByRole('button', { name: 'Data & jobs', exact: true }).click();
+  await page.getByText('Import or analyze a dataset', {exact: true}).click();
   await page.getByRole('button', { name: 'Analyze & index corpus' }).click();
   await expect(page.getByText('Job queued.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Experiments', exact: true }).click();
+  await page.getByText('Legacy experiments and tuning', {exact: true}).click();
   const queuedResponse = page.waitForResponse(response => response.url().endsWith('/api/v1/jobs') && response.request().method() === 'POST');
   await page.getByRole('button', { name: 'Run comparison' }).click();
   const queuedJob = await (await queuedResponse).json();

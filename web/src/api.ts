@@ -11,6 +11,6 @@ export async function api<T = any>(path: string, body?: unknown): Promise<T> {
   return response.json();
 }
 
-export function useApi<T = any>(path: string, interval = 0) {
-  return useQuery<T>({ queryKey: [path], queryFn: () => api<T>(path), refetchInterval: interval || false });
+export function useApi<T = any>(path: string | null, interval = 0) {
+  return useQuery<T>({ queryKey: [path], queryFn: () => api<T>(path!), enabled: path !== null, refetchInterval: interval || false });
 }

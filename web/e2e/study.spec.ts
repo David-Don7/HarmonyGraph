@@ -26,8 +26,7 @@ test('pilot preparation, blinded export and durable context-path comparison', as
   const downloading = page.waitForEvent('download');
   await page.getByRole('link', {name: 'Download blinded packet', exact: true}).click();
   expect((await downloading).suggestedFilename()).toBe('blinded-review-packet.json');
-  await page.getByRole('button', {name: 'Use source songs', exact: true}).click();
-  await expect(page.getByLabel('Development song IDs')).toHaveValue(song.id);
+  await expect(page.getByText('1 benchmark source song', {exact: true})).toBeVisible();
   const queuedResponse = page.waitForResponse(r => r.url().endsWith('/api/v1/jobs') && r.request().method() === 'POST');
   await page.getByRole('button', {name: 'Queue context-path comparison', exact: true}).click();
   const queued = await (await queuedResponse).json();
